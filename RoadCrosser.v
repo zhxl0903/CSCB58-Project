@@ -1,6 +1,6 @@
 // Part 2 skeleton
 
-module pacman
+module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
 		// Your inputs and outputs here
@@ -81,69 +81,106 @@ endmodule
 //module control(clock, reset_n, );
 
 // requires major modifications to change to memory for RoadCrosser game from Pacman
-module memory(clock, reset_n, x, y, color, n_yellow_beans, n_red_beans, n_mobs, op, offsetxs_in, offsetys_in, new_colors_in);
+module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, op, n_car1, n_car2, n_car3, car1_x_in, car2_x_in, car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in);
 
      input clock, reset_n;
-     input [93:0] offsetxs_in;
-     input [93:0] offsetys_in;
-     input [140:0] new_colors_in;
-
-     // offeset values: 00 = no change; 01=+1, 10=-1
-     // to be changed to non array regs we will use input coordinates above as flattened array coords instead
-     wire [1:0] offsetx [0:46];
-     wire [1:0] offsety [0:46];
-
-     // new colors
-     wire [2:0] newcolors [0:46];
      
      // memory operation types
      input [2:0] op;
 
      // number of each objects (15 max)
-     input [3:0] n_yellow_beans;
-     input [3:0] n_red_beans;
-     input [3:0] n_mobs;
-
-
-     // There are 15 mobs + 15 red beans + 15 yellow beans + player coords
-     output reg [7:0] x [0:46];
-     output reg [7:0] y [0:46];
-     output reg [2:0] color [0:46];
+     input [3:0] n_car1;
+     input [3:0] n_car2;
+     input [3:0] n_car3;
      
+     output reg [3:0] n_car1_out;
+     output reg [3:0] n_car2_out;
+     output reg [3:0] n_car3_out;
+
+     input [7:0] car1_x_in;
+     input [119:0] car1_y_in;
+
+     input [7:0] car2_x_in;
+     input [119:0] car2_y_in;
+
+     input [7:0] car3_x_in;
+     input [119:0]car3_y_in;
+    
+     input [44:0] car1_color_in;
+     input [44:0] car2_color_in;
+     input [44:0] car3_color_in;
+
+     input [7:0]player_x_in;
+     input [7:0]player_y_in;
+     input [2:0]player_color_in;
+
+     input [3:0] lives_in;
+
+     // There are 15 car1 + 15 car2 + 15 car3 (8bits each)
+     output reg [359:0] x;
+     output reg [359:0] y;
+
+     // Cars' colors: 3bit each *45 = 135 bits
+     output reg [134:0] color;
+
+     // Player color and coords
+     output reg [7:0] playerX;
+     output reg [7:0] playerY;
+     output reg [2:0] playerColor;
+     
+     output reg [7:0] score;
+     output reg [3:0] lives; // max 15 lives
+
      integer i;
      integer j;
      genvar k;
      
-     generate 
-         for (k=0; k<=46; k=k+1)
-         begin
-            assign offsetx[k] = offsetxs_in[2*k+1:2*k];
-            assign offsety[k] = offsetys_in[2*k+1:2*k];
-            assign newcolors[k] = new_colors_in[3*k+2:3*k];
-         end
-     endgenerate 
-
-     
+     // Initializes all registers
      initial
      begin
-        for (i=0; i<=46; i=i+1)
+        for (i=0; i<=44; i=i+1)
         begin
-           x[i] <= 0;
-           y[i] <= 0;
-           color[i] <= 0;
+           for (j=8*i; j<=8*i+7; j=j+1)
+           begin
+              x[j] <= 8'b0000_0000;
+              y[j] <= 8'b0000_0000;
+           end
+           
+           for (j=3*i; j<=3*i+2; j=j+1)
+           begin
+              color[j] <= 3'b000;
+           end
         end
+        playerX <= 8'b0000_0000;
+        playerY <= 8'b0000_0000;
+        playerColor <= 3'b000;
+        score <= 8'b0000_0000;
+        lives <= 4'b0001;
      end
 
      always @(posedge clock)
      begin
         if(!reset_n)
         begin
-           for (i=0; i<=46; i=i+1)
-       	   begin
-           	x[i] <= 0;
-           	y[i] <= 0;
-           	color[i] <= 0;
+            
+            // Score is not reset here. It is only reset using opcode 3'b110.
+           for (i=0; i<=44; i=i+1)
+           begin
+               for (j=8*i; j<=8*i+7; j=j+1)
+               begin
+                    x[j] <= 8'b0000_0000;
+                    y[j] <= 8'b0000_0000;
+               end
+           
+               for (j=3*i; j<=3*i+2; j=j+1)
+               begin
+                    color[j] <= 3'b000;
+               end
            end
+            playerX <= 8'b0000_0000;
+            playerY <= 8'b0000_0000;
+            playerColor <= 3'b000;
+   	    lives <= 4'b0001;
         end
         else
         begin
@@ -151,69 +188,76 @@ module memory(clock, reset_n, x, y, color, n_yellow_beans, n_red_beans, n_mobs, 
                
                3'b001: begin
 
-                          // Updates coord using offset
-                          for (i=0;i<=46; i=i+1)
-                          begin
-                             if(offsetx[i] ==2'b00)
-                             begin
-                                x[i] = x[i] + 0;
-                             end
-                             else if(offsetx[i] == 2'b01)
-                             begin
-                                x[i] = x[i] +8'b0000_00001;
-                             end
-                             else if(offsetx[i] == 2'b10)
-                             begin
-                                x[i] = x[i] - 8'b0000_00001;
-                             end
-
-                             if(offsety[i] ==2'b00)
-                             begin
-                                y[i] = y[i] + 0;
-                             end
-                             else if(offsety[i] == 2'b01)
-                             begin
-                                y[i] = y[i] +8'b0000_00001;
-                             end
-                             else if(offsety[i] == 2'b10)
-                             begin
-                                y[i] = y[i] - 8'b0000_00001;
-                             end
-                             color[i] = newcolors[i];
-                          end
+                          // Updates Car1 data
+                          for (i=0; i<=14; i=i+1)
+        		  begin
+                               for (j= 8*i; j<= 8*i+7; j=j+1)
+                               begin
+                                  x[j] <= car1_x_in[j-8*i];
+           			  y[j] <= car1_y_in[j];
+                               end
+           		       for (j=3*i; j<=3*i+2; j=j+1)
+                               begin
+                                  color[j] <= car1_color_in[j];
+                               end   
+           			
+       			  end
                        end
                3'b010: begin
-                          // initializes object points on the screen
 
-                          // Initializes the positions of the 15 mobs
-                          for (i=0; i<=14; i=i+1)
-                          begin
-                              x[i] = i*3;
-                              y[i] = 42;
-                              color[i] = 3'b111; // white
-                          end
-                          
-                          // Initializes the positions of the 15 red beans
+                          // Updates Car2 data
                           for (i=15; i<=29; i=i+1)
-                          begin
-                          end
-                             x[i] = i*3;
-                             y[i] = 42;
-                             color[i] = 3'b100; // Red
-                          // initializes the positions of the 15 yellow beans
-                          for (i=30; i<=44; i=i+1)
-                          begin
-                             x[i] = i*3;
-                             y[i] = 42;
-                             color[i] = 3'b110; // Yellow
-                          end
-                          
-                          // Initializes the position of the player
-                          x[45] = 8'b0100_1111; // 79
-                          y[45] = 8'b0110_1110; // 110
-                          color[45] = 3'b001;  // Blue
-              
+        		  begin
+                               for (j= 8*i; j<= 8*i+7; j=j+1)
+                               begin
+                                  x[j] <= car2_x_in[j-8*i];
+           			  y[j] <= car2_y_in[j-120];
+                               end
+           		       for (j=3*i; j<=3*i+2; j=j+1)
+                               begin
+                                  color[j] <= car2_color_in[j-45];
+                               end   
+           			//x[8*i+7:8*i] <= car2_x_in;
+           			//y[8*i+7:8*i] <= car2_y_in[8*(i-15)+7:8*(i-15)];
+           			//color[3*i+2:3*i] <= car2_color_in[3*(i-15)+2:3*(i-15)];
+       			  end
                        end
+               3'b011: begin
+
+                           // Updates Car3 data
+                          for (i=30; i<=44; i=i+1)
+        		  begin
+                               for(j=8*i; j<=8*i+7; j=j+1)
+                               begin
+                                  x[j] <= car3_x_in[j-8*i];
+                                  y[j] <= car3_y_in[j-240];
+                               end
+                               
+           		       for (j=3*i; j<=3*i+2; j=j+1)
+                               begin
+                                  color[j] <= car3_color_in[j-90];
+                               end          
+           			//x[8*i+7:8*i] <= car3_x_in;
+           			//y[8*i+7:8*i] <= car3_y_in[8*(i-30)+7:8*(i-30)];
+           			//color[3*i+2:3*i] <= car3_color_in[3*(i-44)+2:3*(i-44)];
+       			  end
+                       end
+                
+               3'b100: begin
+                           // Updates player data
+                           playerX <= player_x_in;
+                           playerY <= player_y_in;
+                           playerColor <= player_color_in;
+                       end
+               
+               3'b101:begin 
+                         lives <= lives_in;
+                      end
+               3'b110:begin
+                         // resets score
+                         score <= 8'b0000_0000;
+                      end
+                       
            endcase
 
         end
