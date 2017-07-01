@@ -81,17 +81,17 @@ endmodule
 //module control(clock, reset_n, );
 
 // requires major modifications to change to memory for RoadCrosser game from Pacman
-module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, op, n_car1, n_car2, n_car3, car1_x_in, car2_x_in, car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in);
+module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, op, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in);
 
      input clock, reset_n;
      
      // memory operation types
-     input [2:0] op;
+     input [3:0] op;
 
      // number of each objects (15 max)
-     input [3:0] n_car1;
-     input [3:0] n_car2;
-     input [3:0] n_car3;
+     input [3:0] n_car1_in;
+     input [3:0] n_car2_in;
+     input [3:0] n_car3_in;
      
      output reg [3:0] n_car1_out;
      output reg [3:0] n_car2_out;
@@ -115,6 +115,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      input [2:0]player_color_in;
 
      input [3:0] lives_in;
+     input [7:0] score_in;
 
      // There are 15 car1 + 15 car2 + 15 car3 (8bits each)
      output reg [359:0] x;
@@ -142,13 +143,13 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         begin
            for (j=8*i; j<=8*i+7; j=j+1)
            begin
-              x[j] <= 8'b0000_0000;
-              y[j] <= 8'b0000_0000;
+              x[j] <= 1'b0;
+              y[j] <= 1'b0;
            end
            
            for (j=3*i; j<=3*i+2; j=j+1)
            begin
-              color[j] <= 3'b000;
+              color[j] <= 1'b0;
            end
         end
         playerX <= 8'b0000_0000;
@@ -168,13 +169,13 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
            begin
                for (j=8*i; j<=8*i+7; j=j+1)
                begin
-                    x[j] <= 8'b0000_0000;
-                    y[j] <= 8'b0000_0000;
+                    x[j] <= 1'b0;
+                    y[j] <= 1'b0;
                end
            
                for (j=3*i; j<=3*i+2; j=j+1)
                begin
-                    color[j] <= 3'b000;
+                    color[j] <= 1'b0;
                end
            end
             playerX <= 8'b0000_0000;
@@ -186,7 +187,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         begin
            case (op)
                
-               3'b001: begin
+               4'b0001: begin
 
                           // Updates Car1 data
                           for (i=0; i<=14; i=i+1)
@@ -203,7 +204,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
            			
        			  end
                        end
-               3'b010: begin
+               4'b0010: begin
 
                           // Updates Car2 data
                           for (i=15; i<=29; i=i+1)
@@ -222,7 +223,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
            			//color[3*i+2:3*i] <= car2_color_in[3*(i-15)+2:3*(i-15)];
        			  end
                        end
-               3'b011: begin
+               4'b0011: begin
 
                            // Updates Car3 data
                           for (i=30; i<=44; i=i+1)
@@ -243,20 +244,29 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
        			  end
                        end
                 
-               3'b100: begin
+               4'b0100: begin
                            // Updates player data
                            playerX <= player_x_in;
                            playerY <= player_y_in;
                            playerColor <= player_color_in;
                        end
                
-               3'b101:begin 
+               4'b0101:begin 
                          lives <= lives_in;
                       end
-               3'b110:begin
+               4'b0110:begin
                          // resets score
                          score <= 8'b0000_0000;
                       end
+               4'b0111:begin
+                           // Updates car numbers for each type
+                           n_car1_out <= n_car1_in;
+                           n_car2_out <= n_car2_in;
+                           n_car3_out <= n_car3_in;
+                       end
+               4'b1000: begin
+                           score <= score_in;
+                        end
                        
            endcase
 
