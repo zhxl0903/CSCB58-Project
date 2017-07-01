@@ -1,0 +1,95 @@
+CSCB58 Project File: Summer 2017
+
+Team Member A
+-------------
+First Name: Xiao Lei
+Last Name: Zhang
+Student Number: 998923820
+UofT E-mail Address: excel.zhang@mail.utoronto.ca
+
+
+Team Member B
+-------------
+First Name: Joseph	
+Last Name: Dong
+Student Number:
+UofT E-mail Address:
+
+Team Member C (Optional)
+-------------
+First Name: Andy	
+Last Name: Jung
+Student Number:
+UofT E-mail Address:
+
+Team Member D (Optional)
+-------------
+First Name: 
+Last Name:
+Student Number:
+UofT E-mail Address:
+
+Project Details
+---------------
+Project Title: Open World Particle Pacman
+
+Project Description:
+In this project, we will build a Pacman game using Verilog. VGA display will be used as graphics for the game. All objects, mobs, and players in the game will be represented using particles. Beans have two colors: yellow and red. Mobs will be white. All NPC objects and mobs will start off in random locations on the screen in a war zone. Player will start off in a safe zone. Beans and mobs can move around randomly in the warzone. They cannot overlap each other. The player gains 1 point for catching a yellow bean and 3 points for catching a red bean. The game ends when the player overlaps with a mob. There was be a reset option to restart the game as well. Either the player loses and the game is reset, the game will go back to the starting state. During the starting state, player will select the number of yellow beans(0-15), the number of red means(0-15), and the number of mobs(0-15) that will be generated. KEY[0] will be reset. KEY[1] will be the go KEY. SW[3:0] will be used for inputing the quantities in order: Yellow Beans, Red Beans, Mobs. The score will be displayed on all HEXs. The score will underflow after reaching the max number.
+
+Video URL:
+
+Code URL (please upload a copy of this file to your repository at the end of the project as well, it will
+serve as a useful resource for future development):
+
+
+Proposal
+--------
+
+What do you plan to have completed by the end of the first lab session?:
+
+The code should be 80% done at this stage. Minor testing and debugging will have completed by this stage. 
+
+What do you plan to have completed by the end of the second lab session?:
+
+The code should be completed at this point. We will have tested all functions and ensure at least 85% of the feaures are functioning.
+
+What do you plan to have completed by the end of the third lab session?:
+
+All work should have complted by this stage. We will make the video and demonstrate our work to the TAs.
+
+What is your backup plan if things don’t work out as planned?
+
+We will reduce the amount of features. If the code is not done by the first week, we will ensure it is done by the second week and all testing and debugging should be finished by the start of the third week's lab. 
+
+What hardware will you need beyond the DE2 board 
+(be sure to e-mail Brian if it’s anything beyond the basics to make sure there’s enough to go around)
+
+Motivations
+-----------
+How does this project relate to the material covered in CSCB58?:
+
+FSM will be used for different states of the game. A rate divider will be used to slow down the movement of objects in the game. HEX display will be used to display the scores. A random number generator will be used for random movements of objects in the game. VGA graphics will be used to display the game. Multiplexers may be used for various internal selections during the game. 
+
+Why is this project interesting/cool (for CSCB58 students, and for non CSCB58 students?):
+
+This game offers an opportunity for students to experience the world of early arcade games as well as to learn about how they work in the old days. Future CSCB58 students can also reuse the game engine for their projects.
+
+Why did you personally choose this project?:
+
+This project was inspired by a former CSCB58 project: Why did the chicken cross the road? (By Jerry Lui). We want to challenge ourselves by allowing controllable number of objects in the game without hardcoding each one.
+
+Attributions
+------------
+Provide a complete list of any external resources your project used (attributions should also be included in your
+code).  
+
+Updates
+-------
+
+<Example update. Delte this and add your own updates after each lab session>
+Week 1: We built the hardware and tested the sensors. The distance sensor we had intended to use didn't work as
+expected (wasn't precise enough at further distances, only seems to work accurately within 5-10cm), so instead
+we've decided to change the project to use a light sensor instead. Had trouble getting the FSM to work (kept
+getting stuck in state 101, took longer to debug than expected), so we may not be able to add the
+high score feature, have updated that in the project description as (optional).
+

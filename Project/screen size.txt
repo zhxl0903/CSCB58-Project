@@ -1,0 +1,4 @@
+Screen size:  0<=x<=159 0<=y<=119
+
+Safe Zone:  90<=y<=119
+War Zone: 0<=y<=89
