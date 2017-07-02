@@ -81,12 +81,17 @@ endmodule
 //module control(clock, reset_n, );
 
 // requires major modifications to change to memory for RoadCrosser game from Pacman
-module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, op, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in);
+module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in,
+ car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives,
+ load_score, reset_score);
 
      input clock, reset_n;
      
      // memory operation types
-     input [3:0] op;
+     //input [3:0] op;
+     
+     // new op code inputs
+     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score, reset_score;
 
      // number of each objects (15 max)
      input [3:0] n_car1_in;
@@ -185,10 +190,9 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         end
         else
         begin
-           case (op)
-               
-               4'b0001: begin
-
+             // Now allows simultaneous load updates
+             if(load_car1)
+             begin
                           // Updates Car1 data
                           for (i=0; i<=14; i=i+1)
         		  begin
@@ -203,8 +207,9 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                                end   
            			
        			  end
-                       end
-               4'b0010: begin
+               end
+               if(load_car2)
+               begin
 
                           // Updates Car2 data
                           for (i=15; i<=29; i=i+1)
@@ -222,9 +227,11 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
            			//y[8*i+7:8*i] <= car2_y_in[8*(i-15)+7:8*(i-15)];
            			//color[3*i+2:3*i] <= car2_color_in[3*(i-15)+2:3*(i-15)];
        			  end
-                       end
-               4'b0011: begin
+                      
+               end
 
+               if(load_car3)
+               begin
                            // Updates Car3 data
                           for (i=30; i<=44; i=i+1)
         		  begin
@@ -242,34 +249,39 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
            			//y[8*i+7:8*i] <= car3_y_in[8*(i-30)+7:8*(i-30)];
            			//color[3*i+2:3*i] <= car3_color_in[3*(i-44)+2:3*(i-44)];
        			  end
-                       end
+               end
                 
-               4'b0100: begin
+               if(load_player)
+               begin
                            // Updates player data
                            playerX <= player_x_in;
                            playerY <= player_y_in;
                            playerColor <= player_color_in;
-                       end
+               end
                
-               4'b0101:begin 
+               if(load_lives)
+               begin 
                          lives <= lives_in;
-                      end
-               4'b0110:begin
+               end
+
+               if(reset_score)
+               begin
                          // resets score
                          score <= 8'b0000_0000;
-                      end
-               4'b0111:begin
+               end
+               
+               if(load_num_cars)
+               begin
                            // Updates car numbers for each type
                            n_car1_out <= n_car1_in;
                            n_car2_out <= n_car2_in;
                            n_car3_out <= n_car3_in;
-                       end
-               4'b1000: begin
+               end
+               if(load_score)
+               begin
                            score <= score_in;
-                        end
+               end
                        
-           endcase
-
         end
      end
      
