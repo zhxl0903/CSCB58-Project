@@ -93,7 +93,120 @@ endmodule
 //module control(clock, reset_n, );
 
 //module controlMaster();
-//module controlPlayer();
+module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
+
+    input clock, reset_n,  pulse_in;
+    
+    // input from memory output
+    input [7:0] x;
+    input [7:0] y;
+    input [2:0] color;
+    
+    output reset_divider, divider_enable;
+    
+    // game start signal
+    input start_game;     
+
+    // output values to memory
+    output reg [7:0] x_out;
+    output reg [7:0] y_out;
+    output reg [2:0] color_out;
+
+    output reg load_player;
+
+    // Movement inputs from keys
+    input up, down, left, right;
+
+    reg [5:0] current_state, next_state;
+    integer i;
+
+    localparam
+               S_WAIT          = 5'd0,
+               S_WAIT_FOR_PULSE = 5'd1,
+               S_UPDATE_INFO   = 5'd2;
+
+    always @(*)
+    begin: state_table
+       case (current_state)
+            S_WAIT:  next_state = start_game ? S_WAIT_FOR_PULSE : S_WAIT;
+            S_WAIT_FOR_PULSE: next_state = pulse_in ? S_UPDATE_INFO : S_WAIT_FOR_PULSE;
+            S_UPDATE_INFO: next_state = S_WAIT_FOR_PULSE;
+            default:     next_state = S_WAIT;
+       endcase
+    end
+
+    always @(*)
+    begin
+       // By default make all our signals 0
+
+       load_player = 1'b0;
+       x_out =0;
+       y_out =0;
+       color_out =0;
+       
+       case (current_state)
+           S_UPDATE_INFO: begin
+                             if(!up)
+                             begin
+                                if(y != 8'b0000_0000)
+                                begin
+                                   x_out = x;
+                                   y_out = y - 8'b0000_0001;
+                                   color_out = color;
+                                   load_player = 1'b1;
+                                end
+                            
+                             end
+                             else if(!down)
+                             begin
+                                if(y != `MAX_Y)
+                                begin
+                                   x_out = x;
+                                   y_out = y + 8'b0000_0001;
+                                   color_out = color;
+                                   load_player = 1'b1;
+                                end
+                             end
+                             else if(!left)
+                             begin
+                                if(x != 8'b0000_0000)
+                                begin
+                                   x_out = x - 8'b0000_0001;
+                                   y_out = y;
+                                   color_out = color;
+                                   load_player = 1'b1;
+                                end
+                             end
+                             else if(!right)
+                             begin
+                                if(x != `MAX_X)
+                                begin
+                                   x_out = x + 8'b0000_0001;
+                                   y_out = y;
+                                   color_out = color;
+                                   load_player = 1'b1;
+                                end
+                             end
+                          end
+       endcase
+       
+    
+    end
+
+    // current_state registers
+    always@(posedge clock)
+    begin: state_FFs
+        if(!reset_n)
+            current_state <= S_WAIT;
+        else
+            current_state <= next_state;
+    end // state_FFS
+    
+    
+    assign divider_enable = start_game ? 1'b1 : 1'b0;
+    assign reset_divider = start_game ? 1'b1 : 1'b0;
+
+endmodule
 
 /**
 **/
@@ -162,7 +275,7 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
        case (current_state)
            S_UPDATE_INFO: begin
                              // Moves car across the screen and back to x=0 position if MAX_X is reached.
-                             if (x+8'b0000_0001 <= `MAX_X)
+                             if (x != `MAX_X)
                              begin
                                 x_out = x + 8'b0000_0001;
                                 y_out = y;
@@ -171,7 +284,7 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
                              end
                              else
                              begin
-                                x_out = 8'b0000_0000;
+                                x_out = x + 8'b0000_0000;
                                 y_out = y;
                                 color_out = color;
                                 load_car = 1'b1;
