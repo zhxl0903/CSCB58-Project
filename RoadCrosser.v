@@ -1,5 +1,17 @@
 // Part 2 skeleton
 
+// Max coords
+`define MAX_X 159
+`define MAX_Y 119
+
+// Y range of safe zone
+`define SAFE_Y_MIN 100
+`define SAFE_Y_MAX 119
+
+// Y range of War zone
+`define WAR_Y_MIN 0
+`define WAR_Y_MAX 99
+
 module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
@@ -118,12 +130,12 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
     // WAR_Y_MIN = 0d
     // WAR_Y_MAX = 99d
     localparam  
-                MAX_X           = 8'b1001_1111,
-                MAX_Y           = 8'b0111_0111,
-                SAFE_Y_MIN      = 8'b0110_0100,
-                SAFE_Y_MAX      = 8'b0111_0111,
-                WAR_Y_MIN       = 8'b0000_0000,
-                WAR_Y_MAX       = 8'b0110_0011,
+                //MAX_X           = 8'b1001_1111,
+                //MAX_Y           = 8'b0111_0111,
+                //SAFE_Y_MIN      = 8'b0110_0100,
+                //SAFE_Y_MAX      = 8'b0111_0111,
+                //WAR_Y_MIN       = 8'b0000_0000,
+               // WAR_Y_MAX       = 8'b0110_0011,
                 S_WAIT          = 5'd0,
                 S_WAIT_FOR_PULSE = 5'd1,
                 S_UPDATE_INFO   = 5'd2;
@@ -150,7 +162,7 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
        case (current_state)
            S_UPDATE_INFO: begin
                              // Moves car across the screen and back to x=0 position if MAX_X is reached.
-                             if (x+8'b0000_0001 <= MAX_X)
+                             if (x+8'b0000_0001 <= `MAX_X)
                              begin
                                 x_out = x + 8'b0000_0001;
                                 y_out = y;
