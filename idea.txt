@@ -76,8 +76,13 @@ If time permits, we will add an additional input controlling the number of lives
 during the key press setting stage before the game. We will decrease the life for each collision detected between
 player and enemies. If life drops down to 0, we will end the game. The life variable is connected as output to the HEX Display.
 
+New idea for CLOCK:
+All modules will use CLOCK_50. For delays in each minor control unit, we will still in the WAIT State until we get an update pulse
+from divider. Then we will go into a few more states to do movement updates. Since number of state tranistions = number of clock cycles << (far less than) min 100000 clock cycle
+periods of the divders, we are fine as long as we go back to the wait state in time.
 
-
+We will need wires allowing simul-update of the memory (e.g. updating type1, type2, and type3 enemy data simulataenously.
+Each control unit can output the update signal to different wires to turn on the update for the specific type of enermy.
 
 
 
