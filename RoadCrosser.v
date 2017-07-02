@@ -80,10 +80,116 @@ endmodule
 
 //module control(clock, reset_n, );
 
+//module controlMaster();
+//module controlPlayer();
+
+/**
+**/
+module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, x, y, color, n_cars, load_car, x_out, y_out, color_out);
+
+    input clock, reset_n,  pulse_in;
+
+    // input from memory output
+    input [7:0] x;
+    input [119:0] y;
+    input [44:0] color;
+    input [3:0] n_cars;
+
+    input start_game;
+     
+    output reset_divider, divider_enable;
+
+    // output values to memory
+    output reg [7:0] x_out;
+    output reg [119:0] y_out;
+    output reg [44:0] color_out;
+    
+    // loads car1s' x's, y's, and colors into memory on next
+    // posedge of clock iff load_car1 = 1'b1
+    output reg load_car;
+    
+    reg [5:0] current_state, next_state;
+    integer i;
+
+    // MAX_X = 159d
+    // MAX_Y = 119d
+    // SAFE_Y_MIN = 100d
+    // SAFE_Y_MAX = 119d
+    // WAR_Y_MIN = 0d
+    // WAR_Y_MAX = 99d
+    localparam  
+                MAX_X           = 8'b1001_1111,
+                MAX_Y           = 8'b0111_0111,
+                SAFE_Y_MIN      = 8'b0110_0100,
+                SAFE_Y_MAX      = 8'b0111_0111,
+                WAR_Y_MIN       = 8'b0000_0000,
+                WAR_Y_MAX       = 8'b0110_0011,
+                S_WAIT          = 5'd0,
+                S_WAIT_FOR_PULSE = 5'd1,
+                S_UPDATE_INFO   = 5'd2;
+
+    always @(*)
+    begin: state_table
+       case (current_state)
+            S_WAIT:  next_state = start_game ? S_WAIT_FOR_PULSE : S_WAIT;
+            S_WAIT_FOR_PULSE: next_state = pulse_in ? S_UPDATE_INFO : S_WAIT_FOR_PULSE;
+            S_UPDATE_INFO: next_state = S_WAIT_FOR_PULSE;
+            default:     next_state = S_WAIT;
+       endcase
+    end
+    
+    always @(*)
+    begin
+       // By default make all our signals 0
+
+       load_car = 1'b0;
+       x_out =0;
+       y_out =0;
+       color_out =0;
+       
+       case (current_state)
+           S_UPDATE_INFO: begin
+                             // Moves car across the screen and back to x=0 position if MAX_X is reached.
+                             if (x+8'b0000_0001 <= MAX_X)
+                             begin
+                                x_out = x + 8'b0000_0001;
+                                y_out = y;
+                                color_out = color;
+                                load_car = 1'b1;
+                             end
+                             else
+                             begin
+                                x_out = 8'b0000_0000;
+                                y_out = y;
+                                color_out = color;
+                                load_car = 1'b1;
+                             end
+                          end
+       endcase
+       
+    
+    end
+
+    // current_state registers
+    always@(posedge clock)
+    begin: state_FFs
+        if(!reset_n)
+            current_state <= S_WAIT;
+        else
+            current_state <= next_state;
+    end // state_FFS
+    
+    
+    assign divider_enable = start_game ? 1'b1 : 1'b0;
+    assign reset_divider = start_game ? 1'b1 : 1'b0;
+   
+endmodule
+
+
 // requires major modifications to change to memory for RoadCrosser game from Pacman
 module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in,
  car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives,
- load_score, reset_score);
+ load_score, reset_score, init_cars_data);
 
      input clock, reset_n;
      
@@ -91,7 +197,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      //input [3:0] op;
      
      // new op code inputs
-     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score, reset_score;
+     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data;
 
      // number of each objects (15 max)
      input [3:0] n_car1_in;
@@ -281,6 +387,12 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                begin
                            score <= score_in;
                end
+               
+               // initializes car data
+               if(init_cars_data)
+               begin
+                  
+               end
                        
         end
      end
@@ -296,12 +408,15 @@ in the game. period sets the number of cycles of the clock
 before the divider resets. If you want the period to be P,
 then set period to be P-1. The Pth cycle is when q==period
 and q resets. Pulse is generated in throughout the last 
-cycle. 
+cycle. Clear_b resets the counter to start countring from
+0 and sets pulse to 0. The divider will function iff enable
+is 1'b1.  Reset will work regardless of the value of enable.
 **/
-module RateDivider (clock, q, Clear_b, period, pulse);  
+module RateDivider (clock, q, reset_n, enable, period, pulse);  
     input [0:0] clock;
-    input [0:0] Clear_b;
+    input [0:0] reset_n;
     input [25:0] period;
+    input enable;
     output reg pulse;
 
     // declares q
@@ -318,21 +433,30 @@ module RateDivider (clock, q, Clear_b, period, pulse);
     // triggered every time clock rises
     always@(posedge clock)   
     begin
-        pulse = 1'b0;
-        if (q == period) 
+   
+        if(!reset_n)
         begin
-            // q reset to 0
-            q <= 0; 
+           pulse = 0;
+       	   q = 0;
+        end
+        else if(enable)
+        begin
+                // peforms normal counting and pulsing if enabled
+        	if (q == period) 
+       	 	begin
+            		// q reset to 0
+            		q <= 0; 
 
-            // generates pulse
-            pulse <= 1'b1;
-        end
-        else if (clock == 1'b1) 
-        begin
-            // increments q
-            q <= q + 1'b1;  
-        end
-    end
+            		// generates pulse
+            		pulse <= 1'b1;
+        	end
+        	else if (clock == 1'b1) 
+        	begin
+            		// increments q
+            		q <= q + 1'b1;  
+        	end
+    	end
+   end
 endmodule
 
 /**
@@ -380,7 +504,7 @@ outputs a 90 bit random number per
 cycle of clk(on positive edge). rst_n
 is a synchronous active low reset. 
 **/
-module fibonacci_lfsr_5bit(
+module fibonacci_lfsr_90bit(
   input clk,
   input rst_n,
 
