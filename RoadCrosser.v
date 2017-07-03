@@ -578,6 +578,7 @@ module RateDivider (clock, q, reset_n, enable, period, pulse);
         	else if (clock == 1'b1) 
         	begin
             		// increments q
+                        pulse <= 1'b0;
             		q <= q + 1'b1;  
         	end
     	end
