@@ -92,7 +92,186 @@ endmodule
 
 //module control(clock, reset_n, );
 
-//module controlMaster();
+module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, load_lives,
+ load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
+ playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in);
+
+    input clock, reset_n;
+    input [9:0] SW_in;    
+
+    // stores output data to vga module
+    output plot;
+    output reg [2:0] vga_color;
+    output reg [7:0] vga_x;
+    output reg [7:0] vga_y;
+
+    // loading codes to memory
+    output reg load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data;
+    
+    // controls start of the game
+    output reg start_game;
+
+    // input for number of cars of each type from memory
+    input [3:0] n_car1;
+    input [3:0] n_car2;
+    input [3:0] n_car3;
+
+    // output of number of cars of each type to memory
+    output reg [3:0] n_car1_out;
+    output reg [3:0] n_car2_out;
+    output reg [3:0] n_car3_out;
+
+    // input for x,y coords of each car from memory
+    input [359:0] x;
+    input [359:0] y;
+    
+    // input for color for each car from memory
+    input [134:0] color;
+
+    // input for player data from memory
+    input [7:0] playerX;
+    input [7:0] playerY;
+    input [2:0] playerColor;
+    
+    // stores coordinates since last graphic update
+    reg [359:0] curr_x;
+    reg [359:0] curr_y;
+
+    // stores coordinates since last graphic update
+    reg [7:0] curr_playerX;
+    reg [7:0] curr_playerY;
+
+    // input for player lives and score from memory
+    input [3:0] lives;
+    input [7:0] score;
+    
+    // output for player lives and score to memory
+    output reg [3:0] lives_out;
+    output reg [7:0] score_out;
+    
+    // Go button during lives and number of cars selection states
+    input go;
+    
+    // state registers
+    reg [5:0] current_state, next_state;
+    
+    // stores index of car during graphic update
+    integer car_index;
+    
+    integer i;
+
+    reg [15:0] counter;
+ 
+    localparam
+               S_LIVES_INPUT            = 6'd0,
+               S_LIVES_INPUT_WAIT       = 6'd1,
+               S_N_CARS1_INPUT          = 6'd2,
+               S_N_CARS1_INPUT_WAIT     = 6'd3,
+               S_N_CARS2_INPUT          = 6'd4,
+               S_N_CARS2_INPUT_WAIT     = 6'd5,
+               S_N_CARS3_INPUT          = 6'd6,
+               S_N_CARS3_INPUT_WAIT     = 6'd7,
+               S_INIT_DATA              = 6'd8,
+               S_INIT_DATA_WAIT         = 6'd9,
+               S_UPDATE_GRAPHICS        = 6'd10,
+               S_UPDATE_GRAPHICS_CLEAR = 6'd11,
+               S_UPDATE_GRAPHICS_CLEAR_END = 6'd18,
+               S_UPDATE_GRAPHICS_CARS  = 6'd19,
+               S_UPDATE_GRAPHICS_CARS_END  = 6'd20,
+               S_UPDATE_GRAPHICS_PLAYER = 6'd12,
+               S_UPDATE_GRAPHICS_WAIT   = 6'd13,
+               S_COLLISION_DETECTION    = 6'd14,
+               S_COLLISION_DETECTION_END = 6'd15,
+               S_WIN_DETECTION = 6'd16,
+               S_WIN_DETECTION_END = 6'd21,
+               S_RESET1 = 6'd17
+               S_CLEAR_SCREEN = 6'd22;
+               S_CLEAR_SCREEN_END = 6'd23;
+               
+               
+               
+    always @(*)
+    begin: state_table
+       case (current_state)
+              S_LIVES_INPUT : next_state = go ? S_LIVES_INPUT_WAIT: S_LIVES_INPUT;
+              S_LIVES_INPUT_WAIT: next_state = go ?  S_LIVES_INPUT_WAIT : S_N_CARS1_INPUT;
+              S_N_CARS1_INPUT: next_state = go ? S_N_CARS1_INPUT_WAIT : S_N_CARS1_INPUT;
+              S_N_CARS1_INPUT_WAIT: next_state = go ? S_N_CARS1_INPUT_WAIT : S_N_CARS2_INPUT;
+              S_N_CARS2_INPUT: next_state = go ? S_N_CARS2_INPUT_WAIT : S_N_CARS2_INPUT;
+              S_N_CARS2_INPUT_WAIT: next_state = go ? S_N_CARS2_INPUT_WAIT : S_N_CARS3_INPUT;
+              S_N_CARS3_INPUT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_N_CARS3_INPUT;
+              S_N_CARS3_INPUT_WAIT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_INIT_DATA;
+              S_INIT_DATA: next_state = S_INIT_DATA_WAIT;
+              S_INIT_DATA_WAIT: next_state = S_UPDATE_GRAPHICS;
+              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR;
+              S_UPDATE_GRAPHICS_CLEAR: next_state = (car_index == 45) ? S_UPDATE_GRAPHICS_CLEAR_END  : S_UPDATE_GRAPHICS_CLEAR;
+              S_UPDATE_GRAPHICS_CLEAR_END:  next_state = S_UPDATE_GRAPHICS_CARS;
+              S_UPDATE_GRAPHICS_CARS: next_state = (car_index == 45) ?  S_UPDATE_GRAPHICS_CARS_END : S_UPDATE_GRAPHICS_CARS;
+              S_UPDATE_GRAPHICS_CARS_END: next_state = S_UPDATE_GRAPHICS_PLAYER;
+              S_UPDATE_GRAPHICS_PLAYER: next_state =  S_COLLISION_DETECTION;
+              S_COLLISION_DETECTION: next_state = (car_index == 45) ? S_COLLISION_DETECTION_END;
+              S_COLLISION_DETECTION_END: next_state = start_game ?  S_WIN_DETECTION : S_RESET1;
+              S_WIN_DETECTION: next_state = S_WIN_DETECTION_END;
+              S_WIN_DETECTION_END: next_state = start_game ?  S_UPDATE_GRAPHICS : S_RESET1;
+              S_RESET1: next_state = S_CLEAR_SCREEN;
+              S_CLEAR_SCREEN: next_state = (counter == 16'b1111_1111_1111_1111) ? S_CLEAR_SCREEN_END : S_CLEAR_SCREEN;
+              S_CLEAR_SCREEN_END: S_LIVES_INPUT;
+              default: next_state = S_LIVES_INPUT;         
+       endcase
+    end
+
+   always @(*)
+   begin
+      // resets all output to memory instructions by default
+      load_num_cars = 1'b0;
+      load_player = 1'b0;
+      load_lives = 1'b0;
+      load_score = 1'b0;
+      reset_score = 1'b0;
+      init_cars_data = 1'b0;
+      init_player_data = 1'b0;
+      
+      case (current_state)
+           S_LIVES_INPUT: begin
+                             lives_out = SW_in[3:0];
+                             load_lives = 1'b1;
+                          end
+           S_N_CARS1_INPUT: begin
+                               n_car1_out = SW_in[3:0];
+                            end
+           S_N_CARS2_INPUT: begin
+                               n_car2_out = SW_in[3:0];
+                            end 
+           S_N_CARS3_INPUT: begin
+                               n_cars3_out = SW_in[3:0];
+                               load_num_cars = 1'b1;
+                            end
+           S_INIT_DATA: begin
+                           init_cars_data =1'b1;
+                           init_player_data = 1'b1;
+                        end
+           S_INIT_DATA_WAIT: begin
+                                start_game = 1'b1;
+                             end
+
+           S_UPDATE_GRAPHICS:
+      endcase
+      
+   end
+   
+   always@(posedge clock)
+   begin: state_FFs
+        if(!reset_n)
+            current_state <= S_RESET1;
+        else
+            current_state <= next_state;
+   end // state_FFS
+                
+   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR || current_state == S_UPDATE_GRAPHICS_CLEAR || S_UPDATE_GRAPHICS_CARS || 
+   S_UPDATE_GRAPHICS_PLAYER || S_CLEAR_SCREEN) ? 1'b1 : 1'b0;
+ 
+endmodule
+
 module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
 
     input clock, reset_n,  pulse_in;
@@ -117,7 +296,7 @@ module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, 
     // Movement inputs from keys
     input up, down, left, right;
 
-    reg [5:0] current_state, next_state;
+    reg [4:0] current_state, next_state;
     integer i;
 
     localparam
@@ -233,7 +412,7 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
     // posedge of clock iff load_car1 = 1'b1
     output reg load_car;
     
-    reg [5:0] current_state, next_state;
+    reg [4:0] current_state, next_state;
     integer i;
 
     // MAX_X = 159d
@@ -314,7 +493,7 @@ endmodule
 // requires major modifications to change to memory for RoadCrosser game from Pacman
 module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in,
  car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives,
- load_score, reset_score, init_cars_data);
+ load_score, reset_score, init_cars_data, init_player_data);
 
      input clock, reset_n;
      
@@ -322,7 +501,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      //input [3:0] op;
      
      // new op code inputs
-     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data;
+     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data;
 
      // number of each objects (15 max)
      input [3:0] n_car1_in;
@@ -517,6 +696,10 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                if(init_cars_data)
                begin
                   
+               end
+               
+               if(init_player_data)
+               begin
                end
                        
         end
