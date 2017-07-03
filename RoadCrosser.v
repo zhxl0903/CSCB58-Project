@@ -94,7 +94,7 @@ endmodule
 
 module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, load_lives,
  load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
- playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in);
+ playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset);
 
     input clock, reset_n;
     input [9:0] SW_in;    
@@ -104,6 +104,13 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
     output reg [2:0] vga_color;
     output reg [7:0] vga_x;
     output reg [7:0] vga_y;
+    
+    //Controls memory reset
+    output reg memReset;
+    
+    // temporary variables to store car coord during collision detection
+    reg [7:0] checkX;
+    reg [7:0] checkY;
 
     // loading codes to memory
     output reg load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data;
@@ -133,6 +140,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
     input [7:0] playerY;
     input [2:0] playerColor;
     
+    
     // stores coordinates since last graphic update
     reg [359:0] curr_x;
     reg [359:0] curr_y;
@@ -153,47 +161,54 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
     input go;
     
     // state registers
-    reg [5:0] current_state, next_state;
+    reg [6:0] current_state, next_state;
     
     // stores index of car during graphic update
     integer car_index;
     
     integer i;
+    integer j;
 
     reg [15:0] counter;
  
     localparam
-               S_LIVES_INPUT            = 6'd0,
-               S_LIVES_INPUT_WAIT       = 6'd1,
-               S_N_CARS1_INPUT          = 6'd2,
-               S_N_CARS1_INPUT_WAIT     = 6'd3,
-               S_N_CARS2_INPUT          = 6'd4,
-               S_N_CARS2_INPUT_WAIT     = 6'd5,
-               S_N_CARS3_INPUT          = 6'd6,
-               S_N_CARS3_INPUT_WAIT     = 6'd7,
-               S_INIT_DATA              = 6'd8,
-               S_INIT_DATA_WAIT         = 6'd9,
-               S_UPDATE_GRAPHICS        = 6'd10,
-               S_UPDATE_GRAPHICS_CLEAR = 6'd11,
-               S_UPDATE_GRAPHICS_CLEAR_CYCLE1 = 6'd24,
-               S_UPDATE_GRAPHICS_CLEAR_CYCLE2 = 6'd25,
-               S_UPDATE_GRAPHICS_CLEAR_END = 6'd18,
-               S_UPDATE_GRAPHICS_CARS  = 6'd19,
-               S_UPDATE_GRAPHICS_CARS_CYCLE1 = 6'd26,
-               S_UPDATE_GRAPHICS_CARS_CYCLE2 = 6'd27,
-               S_UPDATE_GRAPHICS_CARS_END  = 6'd20,
-               S_UPDATE_GRAPHICS_PLAYER = 6'd12,
-               S_UPDATE_GRAPHICS_PLAYER_CYCLE1 = 6'd28,
-               S_UPDATE_GRAPHICS_WAIT   = 6'd13,
-               S_COLLISION_DETECTION    = 6'd14,
-               S_COLLISION_DETECTION_END = 6'd15,
-               S_WIN_DETECTION = 6'd16,
-               S_WIN_DETECTION_END = 6'd21,
-               S_RESET1 = 6'd17,
-               S_CLEAR_SCREEN = 6'd22;
-               S_CLEAR_SCREEN_CYCLE1 = 6'd29,
-               S_CLEAR_SCREEN_CYCLE2 = 6'd30,
-               S_CLEAR_SCREEN_END = 6'd23;
+               S_LIVES_INPUT            = 7'd0,
+               S_LIVES_INPUT_WAIT       = 7'd1,
+               S_N_CARS1_INPUT          = 7'd2,
+               S_N_CARS1_INPUT_WAIT     = 7'd3,
+               S_N_CARS2_INPUT          = 7'd4,
+               S_N_CARS2_INPUT_WAIT     = 7'd5,
+               S_N_CARS3_INPUT          = 7'd6,
+               S_N_CARS3_INPUT_WAIT     = 7'd7,
+               S_INIT_DATA              = 7'd8,
+               S_INIT_DATA_WAIT         = 7'd9,
+               S_UPDATE_GRAPHICS        = 7'd10,
+               S_UPDATE_GRAPHICS_CLEAR = 7'd11,
+               S_UPDATE_GRAPHICS_CLEAR_CYCLE1 = 7'd24,
+               S_UPDATE_GRAPHICS_CLEAR_CYCLE2 = 7'd25,
+               S_UPDATE_GRAPHICS_CLEAR_CARS_END = 7'd33,
+               S_UPDATE_GRAPHICS_CLEAR_PLAYER = 7'd31,
+               S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 = 7'd32,
+               S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2 = 7'd34, 
+               S_UPDATE_GRAPHICS_CLEAR_END = 7'd18,
+               S_UPDATE_GRAPHICS_CARS  = 7'd19,
+               S_UPDATE_GRAPHICS_CARS_CYCLE1 = 7'd26,
+               S_UPDATE_GRAPHICS_CARS_CYCLE2 = 7'd27,
+               S_UPDATE_GRAPHICS_CARS_END  = 7'd20,
+               S_UPDATE_GRAPHICS_PLAYER = 7'd12,
+               S_UPDATE_GRAPHICS_PLAYER_CYCLE1 = 7'd28,
+               S_UPDATE_GRAPHICS_WAIT   = 7'd13,
+               S_COLLISION_DETECTION    = 7'd14,
+               S_COLLISION_DETECTION_CYCLE1 = 7'd35,
+               S_COLLISION_DETECTION_CYCLE2 = 7'd36,
+               S_COLLISION_DETECTION_END = 7'd15,
+               S_WIN_DETECTION = 7'd16,
+               S_WIN_DETECTION_END = 7'd21,
+               S_RESET1 = 7'd17,
+               S_CLEAR_SCREEN = 7'd22,
+               S_CLEAR_SCREEN_CYCLE1 = 7'd29,
+               S_CLEAR_SCREEN_CYCLE2 = 7'd30,
+               S_CLEAR_SCREEN_END = 7'd23;
                
                
                
@@ -213,23 +228,29 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
               S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR;
               S_UPDATE_GRAPHICS_CLEAR: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE2;
-              S_UPDATE_GRAPHICS_CLEAR_CYCLE2: next_state = (car_index == 45) ? S_UPDATE_GRAPHICS_CLEAR_END  : S_UPDATE_GRAPHICS_CLEAR;
+              S_UPDATE_GRAPHICS_CLEAR_CYCLE2: next_state = (car_index == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END  : S_UPDATE_GRAPHICS_CLEAR;
+              S_UPDATE_GRAPHICS_CLEAR_CARS_END: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER; 
+              S_UPDATE_GRAPHICS_CLEAR_PLAYER: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1;
+              S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2;
+              S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2: next_state =  S_UPDATE_GRAPHICS_CLEAR_END;
               S_UPDATE_GRAPHICS_CLEAR_END:  next_state = S_UPDATE_GRAPHICS_CARS;
-              S_UPDATE_GRAPHICS_CARS: S_UPDATE_GRAPHICS_CARS_CYCLE1;
+              S_UPDATE_GRAPHICS_CARS: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE1;
               S_UPDATE_GRAPHICS_CARS_CYCLE1: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE2;
               S_UPDATE_GRAPHICS_CARS_CYCLE2: next_state = (car_index == 45) ?  S_UPDATE_GRAPHICS_CARS_END : S_UPDATE_GRAPHICS_CARS;
               S_UPDATE_GRAPHICS_CARS_END: next_state = S_UPDATE_GRAPHICS_PLAYER;
               S_UPDATE_GRAPHICS_PLAYER: next_state = S_UPDATE_GRAPHICS_PLAYER_CYCLE1;
               S_UPDATE_GRAPHICS_PLAYER_CYCLE1: next_state = S_COLLISION_DETECTION;
-              S_COLLISION_DETECTION: next_state = (car_index == 45) ? S_COLLISION_DETECTION_END;
-              S_COLLISION_DETECTION_END: next_state = start_game ?  S_WIN_DETECTION : S_RESET1;
+              S_COLLISION_DETECTION: next_state = S_COLLISION_DETECTION_END;
+              S_COLLISION_DETECTION_CYCLE1: next_state = S_COLLISION_DETECTION_CYCLE2;
+              S_COLLISION_DETECTION_CYCLE2: next_state = S_COLLISION_DETECTION_END;
+              S_COLLISION_DETECTION_END: next_state = (start_game) ?  S_WIN_DETECTION : S_RESET1;
               S_WIN_DETECTION: next_state = S_WIN_DETECTION_END;
               S_WIN_DETECTION_END: next_state = start_game ?  S_UPDATE_GRAPHICS : S_RESET1;
               S_RESET1: next_state = S_CLEAR_SCREEN;
               S_CLEAR_SCREEN: next_state = S_CLEAR_SCREEN_CYCLE1;
               S_CLEAR_SCREEN_CYCLE1: next_state = S_CLEAR_SCREEN_CYCLE2;
-              S_CLEAR_SCREEN_CYCLE2: = next_state = (counter == 16'b1111_1111_1111_1111) ? S_CLEAR_SCREEN_END : S_CLEAR_SCREEN;
-              S_CLEAR_SCREEN_END: S_LIVES_INPUT;
+              S_CLEAR_SCREEN_CYCLE2: next_state = (counter == 16'b1111_1111_1111_1111) ? S_CLEAR_SCREEN_END : S_CLEAR_SCREEN;
+              S_CLEAR_SCREEN_END: next_state = S_LIVES_INPUT;
               default: next_state = S_LIVES_INPUT;         
        endcase
     end
@@ -244,6 +265,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
       reset_score = 1'b0;
       init_cars_data = 1'b0;
       init_player_data = 1'b0;
+      memReset = 1'b1;
       
       case (current_state)
            S_LIVES_INPUT: begin
@@ -257,12 +279,13 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                n_car2_out = SW_in[3:0];
                             end 
            S_N_CARS3_INPUT: begin
-                               n_cars3_out = SW_in[3:0];
+                               n_car3_out = SW_in[3:0];
                                load_num_cars = 1'b1;
                             end
            S_INIT_DATA: begin
                            init_cars_data =1'b1;
                            init_player_data = 1'b1;
+                           reset_score = 1'b1;
                         end
            S_INIT_DATA_WAIT: begin
                                 start_game = 1'b1;
@@ -272,6 +295,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                  car_index = 0;
                                  curr_x = x;
                                  curr_y = y;
+                                 curr_playerX = playerX;
+                                 curr_playerY = playerY;
                               end
            S_UPDATE_GRAPHICS_CLEAR: begin
 
@@ -285,12 +310,113 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                     end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE1: begin
                                              car_index = car_index + 1;
-                                          end           
+                                          end  
+          S_UPDATE_GRAPHICS_CLEAR_CARS_END: begin
+                                               car_index = 0;
+                                            end   
+          S_UPDATE_GRAPHICS_CLEAR_PLAYER: begin
+                                             vga_x = curr_playerX;
+                                             vga_y = curr_playerY;
+                                             vga_color = playerColor;
+                                          end  
           S_UPDATE_GRAPHICS_CLEAR_END: begin
                                           // Initializes car index for updating cars on the screen
                                           car_index = 0;
                                        end
-          
+          S_UPDATE_GRAPHICS_CARS: begin
+                                     for (i=0; i<=7; i=i+1)
+                                     begin
+                                        vga_x[i] = x[car_index*8 + i];
+                                        vga_y[i] = y[car_index*8 + i];
+                                        
+                                        // Stores coordinate plotted for clearing later
+                                        curr_x[i] = x[car_index*8 + i];
+                                        curr_y[i] = x[car_index*8 + i];
+                                     end
+                                     
+                                     for (i=0; i<=2; i=i+1)
+                                     begin
+                                          vga_color[i] = color[car_index*3 + i]; 
+                                     end
+                                  end
+          S_UPDATE_GRAPHICS_CARS_CYCLE1: begin
+                                            car_index = car_index + 1;
+                                         end
+          S_UPDATE_GRAPHICS_CARS_END: begin
+                                         car_index = 0;
+                                      end
+          S_UPDATE_GRAPHICS_PLAYER: begin
+                                       curr_playerX = playerX;
+                                       curr_playerY = playerY;
+                                       vga_x = curr_playerX;
+                                       vga_y = curr_playerY;
+                                       vga_color = playerColor;
+                                    end
+          S_UPDATE_GRAPHICS_PLAYER_CYCLE1: begin
+
+                                              // Updates the score
+                                              score_out = curr_playerY;
+                                              load_score = 1'b1;
+                                           end
+          S_COLLISION_DETECTION: begin
+                                    for (i = 0; i<=44; i=i+1)
+                                    begin
+                                       for (j = 0; j<=7; j=j+1)
+                                       begin
+                                          checkX[j] = curr_x[8*i + j];
+                                          checkY[j] = curr_y[8*i + j];
+                                       end
+                                       if(checkX == curr_playerX && checkY == curr_playerY)
+                                       begin
+                                             lives_out = lives - 4'b0001;
+                                             load_lives = 1'b1;
+                                       end
+                                    end
+                                 end
+           S_COLLISION_DETECTION_CYCLE2: begin
+                                            if(lives == 0)
+                                            begin
+                                               start_game = 1'b0;
+                                            end
+                                         end
+           S_WIN_DETECTION: begin
+                               if(curr_playerY == 0)
+                               begin
+                                  start_game = 1'b0;
+                               end
+                            end
+           S_RESET1: begin
+                        counter = 0;
+                        start_game = 1'b0;
+                        memReset = 1'b0;
+                        
+                     end
+           S_CLEAR_SCREEN: begin
+                              // prepares black pixel to be plotted
+                              // counter[7:0] is for x; counter[15:8] is for y
+                              if(counter[7:0] <= `MAX_X && counter[15:8] <= `MAX_Y)
+                              begin
+                                 vga_x = counter[7:0];
+                                 vga_y = counter [15:8];
+                                 vga_color = 3'b000;
+                              end
+                              else
+                              begin
+                                  vga_x = 0;
+                                  vga_y = 0;
+                                  vga_color = 3'b000;
+                              end
+                           end
+         
+         S_CLEAR_SCREEN_CYCLE1: begin
+                                   counter = counter + 1;
+                                end
+         S_CLEAR_SCREEN_END: begin
+                                counter = 0;
+                                memReset = 1'b1;
+                             end
+         
+         
       endcase
       
    end
@@ -303,8 +429,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
             current_state <= next_state;
    end // state_FFS
                 
-   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE2 || S_UPDATE_GRAPHICS_CARS_CYCLE2 || 
-   S_UPDATE_GRAPHICS_PLAYER_CYCLE1 || S_CLEAR_SCREEN_CYCLE2) ? 1'b1 : 1'b0;
+   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE1 || S_UPDATE_GRAPHICS_CARS_CYCLE1 || S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 ||
+   S_UPDATE_GRAPHICS_PLAYER_CYCLE1 || S_CLEAR_SCREEN_CYCLE1) ? 1'b1 : 1'b0;
  
 endmodule
 
