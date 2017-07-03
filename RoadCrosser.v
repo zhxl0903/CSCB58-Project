@@ -254,7 +254,13 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                 start_game = 1'b1;
                              end
 
-           S_UPDATE_GRAPHICS:
+           S_UPDATE_GRAPHICS: begin
+                                 car_index = 0;
+                                 
+                              end
+           S_UPDATE_GRAPHICS_CLEAR: begin
+                                       
+                                    end                    
       endcase
       
    end
