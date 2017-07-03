@@ -429,8 +429,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
             current_state <= next_state;
    end // state_FFS
                 
-   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE1 || S_UPDATE_GRAPHICS_CARS_CYCLE1 || S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 ||
-   S_UPDATE_GRAPHICS_PLAYER_CYCLE1 || S_CLEAR_SCREEN_CYCLE1) ? 1'b1 : 1'b0;
+   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE1 || current_state == S_UPDATE_GRAPHICS_CARS_CYCLE1 || current_state == S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 ||
+   current_state == S_UPDATE_GRAPHICS_PLAYER_CYCLE1 || current_state == S_CLEAR_SCREEN_CYCLE1) ? 1'b1 : 1'b0;
  
 endmodule
 
