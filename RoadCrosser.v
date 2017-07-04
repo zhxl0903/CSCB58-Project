@@ -12,6 +12,18 @@
 `define WAR_Y_MIN 0
 `define WAR_Y_MAX 99
 
+// Player spawn spot
+`define PLAYER_SPAWN_X 80
+`define PLAYER_SPAWN_Y 115
+
+// Player color
+`define PLAYER_COLOR 1
+
+// Periods of Cars
+`define CAR1_CYCLES 26'd9999999
+`define CAR2_CYCLES 26'd19999999
+`define CAR3_CYCLES 26'd24999999
+`define PLAYER_CYCLES 26'd14999999
 module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
@@ -26,12 +38,18 @@ module RoadCrosser
 		VGA_SYNC_N,						//	VGA SYNC
 		VGA_R,   						//	VGA Red[9:0]
 		VGA_G,	 						//	VGA Green[9:0]
-		VGA_B   						//	VGA Blue[9:0]
+		VGA_B,                                                   //	VGA Blue[9:0]
+ 		HEX0, HEX1, HEX2, HEX3				
 	);
 
 	input			CLOCK_50;				//	50 MHz
 	input   [9:0]   SW;
 	input   [3:0]   KEY;
+
+        output [6:0] HEX0;  // score
+        output [6:0] HEX1;  // score
+        output [6:0] HEX2;  // lives
+        output [6:0] HEX3;
 
 	// Declare your inputs and outputs here
 	// Do not change the following outputs
@@ -45,13 +63,17 @@ module RoadCrosser
 	output	[9:0]	VGA_B;   				//	VGA Blue[9:0]
 	
 	wire resetn;
-	assign resetn = KEY[0];
+	assign resetn = ~SW[9];
+        
 	
 	// Create the colour, x, y and writeEn wires that are inputs to the controller.
 	wire [2:0] colour;
 	wire [7:0] x;
-	wire [6:0] y;
+	wire [7:0] y;
 	wire writeEn;
+        
+        // Output of startGame value
+        wire startGameOut;
 
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
@@ -61,7 +83,7 @@ module RoadCrosser
 			.clock(CLOCK_50),
 			.colour(colour),
 			.x(x),
-			.y(y),
+			.y(y[6:0]),
 			.plot(writeEn),
 			// Signals for the DAC to drive the monitor. 
 			.VGA_R(VGA_R),
@@ -80,11 +102,146 @@ module RoadCrosser
 	// Put your code here. Your code should produce signals x,y,colour and writeEn/plot
 	// for the VGA controller, in addition to any other functionality your design may require.
     
-    // Instansiate datapath
-	// datapath d0(...);
+     // load parameters from master control to RAM
+     wire w_load_num_cars;
+     wire w_load_lives, w_load_score, w_reset_score, w_init_cars_data, w_init_player_data;
 
-    // Instansiate FSM control
-    // control c0(...);
+     // wires for load objects parameters for the RAM
+     wire w_load_car1, w_load_car2, w_load_car3, w_load_player;
+
+     // wires for score out from RAM (digits from right to left)
+     wire [7:0] w_score; 
+
+     // wire for score input into RAM from master control
+     wire [7:0] w_score_ram_in;
+    
+     
+     // wire for lives output from ram
+     wire [3:0] w_lives;
+     
+     // wire for lives input into ram
+     wire [3:0] w_lives_ram_in;
+     
+     
+     // wire for number of cars output from ram
+     wire [3:0] w_n_car1_ram_out;
+     wire [3:0] w_n_car2_ram_out;
+     wire [3:0] w_n_car3_ram_out;
+
+     // wire for number of cars inputs into RAM from master control output
+     wire [3:0] w_n_car1_ram_in;
+     wire [3:0] w_n_car2_ram_in;
+     wire [3:0] w_n_car3_ram_in;
+
+     // wires for output of car data from RAM to mater control
+     wire [359:0] w_x_ram_out;
+     wire [359:0] w_y_ram_out;
+     wire [134:0] w_color_ram_out;
+     
+     // wire for reset signal input to ram from master control
+     wire w_mem_reset_in;
+     
+     // wire for signal status for start reset processing from control master
+     wire w_start_reset_processing;
+     
+     // wire to store SW in to master control
+     wire [9:0] SW_master_control_in;
+     
+     // wire for the go singnal into master control
+     wire go_master_control_in;
+     
+     // go and SW inputs are eanbled iff game is not resetting of running the level
+     assign go_master_control_in = (w_start_reset_processing || startGameOut) ? 0 : ~KEY[0];
+     assign SW_master_control_in = (w_start_reset_processing || startGameOut) ? 0 : SW;
+     
+     // Player data output from RAM
+     wire [7:0] w_player_x_ram_out;
+     wire [7:0] w_player_y_ram_out;
+     wire [2:0] w_player_color_ram_out;
+     
+     // Player data input into RAM from cPlayer control
+     wire [7:0] w_player_x_ram_in;
+     wire [7:0] w_player_y_ram_in;
+     wire [2:0] w_player_color_ram_in;
+     
+     // Car1 data output from RAM
+     wire [7:0] w_car1_x_ram_out;
+     wire [119:0] w_car1_y_ram_out;
+     wire [44:0] w_car1_color_ram_out;
+     
+     // Car2 data output from RAM
+     wire [7:0] w_car2_x_ram_out;
+     wire [119:0] w_car2_y_ram_out;
+     wire [44:0] w_car2_color_ram_out;
+
+     // Car3 data output from RAM
+     wire [7:0] w_car3_x_ram_out;
+     wire [119:0] w_car3_y_ram_out;
+     wire [44:0] w_car3_color_ram_out;
+
+     // assigns ram outputs to wires for cars control inputs
+     assign w_car1_x_ram_out = w_x_ram_out[119:0];
+     assign w_car1_y_ram_out = w_y_ram_out[119:0];
+     assign w_car1_color_ram_out = w_color_ram_out[44:0];
+     
+     assign w_car2_x_ram_out = w_x_ram_out[239:120];
+     assign w_car2_y_ram_out = w_y_ram_out[239:120];
+     assign w_car2_color_ram_out = w_color_ram_out[89:45];
+
+     assign w_car3_x_ram_out = w_x_ram_out[359:240];
+     assign w_car3_y_ram_out = w_y_ram_out[359:240];
+     assign w_car3_color_ram_out = w_color_ram_out[134:90];
+     
+
+     // Car1 data input into RAM
+     wire [7:0] w_car1_x_ram_in;
+     wire [119:0] w_car1_y_ram_in;
+     wire [44:0] w_car1_color_ram_in;
+    
+     // Car2 data input into RAM
+     wire [7:0] w_car2_x_ram_in;
+     wire [119:0] w_car2_y_ram_in;
+     wire [44:0] w_car2_color_ram_in;
+
+     // Car3 data input into RAM
+     wire [7:0] w_car3_x_ram_in;
+     wire [119:0] w_car3_y_ram_in;
+     wire [44:0] w_car3_color_ram_in;
+     
+     // wire from divider reset/enable to corresponding cars/player divider reset/enable
+     wire car1D_reset, car2D_reset, car3D_reset;
+     wire car1D_enable, car2D_enable, car3D_enable;     
+     wire playerD_enable, playerD_reset;
+      
+     // wire from divider pulse to cars/player pulse in
+     wire car1D_pulse, car2D_pulse, car3D_pulse, playerD_pulse;
+
+     // object reset wire from master control to other controls
+     wire w_objects_reset;
+   
+ controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives),
+ .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data), .n_car1(w_n_car1_ram_out), .n_car2(w_n_car2_ram_out), .n_car3(w_n_car3_ram_out), .n_car1_out(w_n_car1_ram_in), .n_car2_out(w_n_car2_ram_in), .n_car3_out(w_n_car3_ram_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out),
+ .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(colour), .vga_x(x), .vga_y(y), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset));
+
+ controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
+
+ controlCar cCar1 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse), .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car1), .x_out(w_car1_x_ram_in), .y_out(w_car1_y_ram_in), .color_out(w_car1_color_ram_in));
+ controlCar cCar2 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car2D_reset), .divider_enable(car1D_enable), .pulse_in(car2D_pulse), .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
+ controlCar cCar3 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car3D_reset), .divider_enable(car1D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out), .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
+
+ memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out), .n_car2_out(w_n_car2_ram_out), .n_car3_out(w_n_car3_ram_out), .n_car1_in(w_n_car1_ram_in), .n_car2_in(w_n_car2_ram_in), .n_car3_in(w_n_car3_ram_in), .car1_x_in(w_car1_x_ram_in), .car2_x_in(w_car2_x_ram_in), .car3_x_in(w_car3_x_ram_in), .car1_y_in(w_car1_y_ram_in),
+ .car2_y_in(w_car2_y_ram_in), .car3_y_in(w_car3_y_ram_in), .car1_color_in(w_car1_color_ram_in), .car2_color_in(w_car2_color_ram_in), .car3_color_in(w_car3_color_ram_in), .player_x_in(w_player_x_ram_in), .player_y_in(w_player_y_ram_in), .player_color_in(w_player_color_ram_in), .lives_in(w_lives_ram_in), .score_in(w_score_ram_in), .load_car1(w_load_car1), .load_car2(w_load_car2), .load_car3(w_load_car3), .load_num_cars(w_load_num_cars), .load_player(w_load_player), .load_lives(w_load_lives),
+ .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data));
+
+  HEXDisplay score1 (.HEX(HEX0[6:0]), .c(w_score[3:0]));
+  HEXDisplay score2 (.HEX(HEX1[6:0]), .c(w_score[7:4]));
+  HEXDisplay livesHEX (.HEX(HEX2[6:0]), .c(w_lives));
+
+  RateDivider car1D (.clock(CLOCK_50), .reset_n(car1D_reset), .enable(car1D_enable), .period(`CAR1_CYCLES), .pulse(car1D_pulse));  
+  RateDivider car2D (.clock(CLOCK_50), .reset_n(car2D_reset), .enable(car2D_enable), .period(`CAR2_CYCLES), .pulse(car2D_pulse));  
+  RateDivider car3D (.clock(CLOCK_50), .reset_n(car3D_reset), .enable(car3D_enable), .period(`CAR3_CYCLES), .pulse(car3D_pulse));  
+  RateDivider playerD (.clock(CLOCK_50), .reset_n(playerD_reset), .enable(playerD_enable), .period(`PLAYER_CYCLES), .pulse(playerD_pulse));  
+
     
 endmodule
 
@@ -92,9 +249,9 @@ endmodule
 
 //module control(clock, reset_n, );
 
-module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, load_lives,
+module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
  load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
- playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset);
+ playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing, objects_reset);
 
     input clock, reset_n;
     input [9:0] SW_in;    
@@ -114,10 +271,14 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
     reg [2:0] checkColor;
 
     // loading codes to memory
-    output reg load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data;
-    
+    output reg load_num_cars, load_lives, load_score, reset_score, init_cars_data, init_player_data;
+
+    // code n-edge triggered reset control to game objects
+    output reg objects_reset;    
+
     // controls start of the game
     output reg start_game;
+    output reg start_reset_processing;
 
     // input for number of cars of each type from memory
     input [3:0] n_car1;
@@ -211,7 +372,11 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                S_CLEAR_SCREEN_CYCLE2 = 7'd30,
                S_CLEAR_SCREEN_END = 7'd23;
                
-               
+    initial
+    begin
+       start_game = 0;
+       start_reset_processing = 0;
+    end          
                
     always @(*)
     begin: state_table
@@ -260,13 +425,13 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
    begin
       // resets all output to memory instructions by default
       load_num_cars = 1'b0;
-      load_player = 1'b0;
       load_lives = 1'b0;
       load_score = 1'b0;
       reset_score = 1'b0;
       init_cars_data = 1'b0;
       init_player_data = 1'b0;
       memReset = 1'b1;
+      objects_reset = 1'b1;
       
       case (current_state)
            S_LIVES_INPUT: begin
@@ -396,7 +561,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
            S_RESET1: begin
                         counter = 0;
                         start_game = 1'b0;
-                        
+                        start_reset_processing = 1'b1;
+                        objects_reset = 1'b0;
                         
                      end
            S_CLEAR_SCREEN: begin
@@ -423,6 +589,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
          S_CLEAR_SCREEN_END: begin
                                 counter = 0;
                                 memReset = 1'b0;
+                                start_reset_processing = 1'b0;
                              end
          
          
@@ -690,7 +857,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      input [119:0] car2_y_in;
 
      input [7:0] car3_x_in;
-     input [119:0]car3_y_in;
+     input [119:0] car3_y_in;
     
      input [44:0] car1_color_in;
      input [44:0] car2_color_in;
@@ -715,12 +882,17 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      output reg [7:0] playerY;
      output reg [2:0] playerColor;
      
+     // Score and lives output
      output reg [7:0] score;
      output reg [3:0] lives; // max 15 lives
 
+     // temp registers for coordinate processing
+     reg [7:0] tempX;
+     reg [7:0] tempY;
+     reg [2:0] tempColor;
+
      integer i;
      integer j;
-     genvar k;
      
      // Initializes all registers
      initial
@@ -866,11 +1038,68 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                // initializes car data
                if(init_cars_data)
                begin
+                   
+                  // Initializes data for car1
+                  for (i=0; i<=14; i=i+1)
+                  begin
+                     tempX <= 0;
+                     tempY <= i*2;
+                     tempColor <= 4;
+                     
+                     for (j=0; j<=7; j=j+1)
+                     begin
+                        x[i*8+j] <= tempX[j];
+                        y[i*8+j] <= tempY[j];
+                     end
+                     for (j=0; j<=2; j=j+1) 
+                     begin
+                        color[i*3+j] <= tempColor[j];
+                     end
+                  end
+                  
+                  // Initializes data for car2
+                  for (i=15; i<=29; i=i+1)
+                  begin
+                     tempX <= 0;
+                     tempY <= i*2;
+                     tempColor <= 2;
+                     
+                     for (j=0; j<=7; j=j+1)
+                     begin
+                        x[i*8+j] <= tempX[j];
+                        y[i*8+j] <= tempY[j];
+                     end
+                     for (j=0; j<=2; j=j+1) 
+                     begin
+                        color[i*3+j] <= tempColor[j];
+                     end
+                  end
+
+                  // Initializes data for car3
+                  for (i=30; i<=44; i=i+1)
+                  begin
+                     tempX <= 0;
+                     tempY <= i*2;
+                     tempColor <= 5;
+                     
+                     for (j=0; j<=7; j=j+1)
+                     begin
+                        x[i*8+j] <= tempX[j];
+                        y[i*8+j] <= tempY[j];
+                     end
+                     for (j=0; j<=2; j=j+1) 
+                     begin
+                        color[i*3+j] <= tempColor[j];
+                     end
+                  end
                   
                end
                
                if(init_player_data)
                begin
+                  playerX = `PLAYER_SPAWN_X;
+                  playerY = `PLAYER_SPAWN_Y;
+                  playerColor =`PLAYER_COLOR;
                end
                        
         end
@@ -891,7 +1120,7 @@ cycle. Clear_b resets the counter to start countring from
 0 and sets pulse to 0. The divider will function iff enable
 is 1'b1.  Reset will work regardless of the value of enable.
 **/
-module RateDivider (clock, q, reset_n, enable, period, pulse);  
+module RateDivider (clock, reset_n, enable, period, pulse);  
     input [0:0] clock;
     input [0:0] reset_n;
     input [25:0] period;
@@ -899,7 +1128,7 @@ module RateDivider (clock, q, reset_n, enable, period, pulse);
     output reg pulse;
 
     // declares q
-    output reg [26:0] q; 
+    reg [26:0] q; 
     
     // declares d, not needed
     //wire [27:0] d; 
