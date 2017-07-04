@@ -108,9 +108,10 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
     //Controls memory reset
     output reg memReset;
     
-    // temporary variables to store car coord during collision detection
+    // temporary variables to store car coord/color during collision detection
     reg [7:0] checkX;
     reg [7:0] checkY;
+    reg [2:0] checkColor;
 
     // loading codes to memory
     output reg load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data;
@@ -269,6 +270,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
       
       case (current_state)
            S_LIVES_INPUT: begin
+                             
                              lives_out = SW_in[3:0];
                              load_lives = 1'b1;
                           end
@@ -309,6 +311,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                          vga_color = 3'b000;
                                     end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE1: begin
+                                            
                                              car_index = car_index + 1;
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_CARS_END: begin
@@ -340,7 +343,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                      end
                                   end
           S_UPDATE_GRAPHICS_CARS_CYCLE1: begin
-                                            car_index = car_index + 1;
+                                           
+                                              car_index = car_index + 1;
                                          end
           S_UPDATE_GRAPHICS_CARS_END: begin
                                          car_index = 0;
@@ -366,7 +370,11 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                                           checkX[j] = curr_x[8*i + j];
                                           checkY[j] = curr_y[8*i + j];
                                        end
-                                       if(checkX == curr_playerX && checkY == curr_playerY)
+                                       for (j = 0; j<=2; j=j+1)
+                                       begin
+                                          checkColor[j] = color[3*i + j];
+                                       end
+                                       if(checkX == curr_playerX && checkY == curr_playerY && checkColor!= 3'b000)
                                        begin
                                              lives_out = lives - 4'b0001;
                                              load_lives = 1'b1;
@@ -388,7 +396,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
            S_RESET1: begin
                         counter = 0;
                         start_game = 1'b0;
-                        memReset = 1'b0;
+                        
                         
                      end
            S_CLEAR_SCREEN: begin
@@ -409,11 +417,12 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_player, loa
                            end
          
          S_CLEAR_SCREEN_CYCLE1: begin
+                                  
                                    counter = counter + 1;
                                 end
          S_CLEAR_SCREEN_END: begin
                                 counter = 0;
-                                memReset = 1'b1;
+                                memReset = 1'b0;
                              end
          
          
