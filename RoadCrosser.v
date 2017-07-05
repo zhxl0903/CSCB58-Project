@@ -568,6 +568,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                         
                      end
            S_CLEAR_SCREEN: begin
+
                               // prepares black pixel to be plotted
                               // counter[7:0] is for x; counter[15:8] is for y
                               if(counter[7:0] <= `MAX_X && counter[15:8] <= `MAX_Y)
@@ -924,7 +925,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         if(!reset_n)
         begin
             
-            // Score is not reset here. It is only reset using opcode 3'b110.
+            // Score is not reset here. It is reset at the start of the game.
            for (i=0; i<=44; i=i+1)
            begin
                for (j=8*i; j<=8*i+7; j=j+1)
