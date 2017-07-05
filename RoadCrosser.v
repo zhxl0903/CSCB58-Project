@@ -803,7 +803,7 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
                              end
                              else
                              begin
-                                x_out = x + 8'b0000_0000;
+                                x_out = 8'b0000_0000;
                                 y_out = y;
                                 color_out = color;
                                 load_car = 1'b1;
