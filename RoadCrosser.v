@@ -24,6 +24,9 @@
 `define CAR2_CYCLES 26'd19999999
 `define CAR3_CYCLES 26'd24999999
 `define PLAYER_CYCLES 26'd14999999
+
+// Period of collision grace
+`define COLLISION_GRACE_PERIOD 26'd16000000
 module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
@@ -220,10 +223,14 @@ module RoadCrosser
 
      // object reset wire from master control to other controls
      wire w_objects_reset;
+
+     // wires connecting collision grace counter module and cMaster
+     wire w_reset_cgrace_pulse1, w_reset_cgrace, w_cgrace_over_pulse;
    
      controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives),
      .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data), .n_car1(w_n_car1_ram_out), .n_car2(w_n_car2_ram_out), .n_car3(w_n_car3_ram_out), .n_car1_out(w_n_car1_ram_in), .n_car2_out(w_n_car2_ram_in), .n_car3_out(w_n_car3_ram_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out),
-     .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(colour), .vga_x(x), .vga_y(y), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset));
+     .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(colour), .vga_x(x), .vga_y(y), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset)
+     , .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace), .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
 
      controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
 
@@ -244,7 +251,7 @@ module RoadCrosser
      RateDivider car3D (.clock(CLOCK_50), .reset_n(car3D_reset), .enable(car3D_enable), .period(`CAR3_CYCLES), .pulse(car3D_pulse));  
      RateDivider playerD (.clock(CLOCK_50), .reset_n(playerD_reset), .enable(playerD_enable), .period(`PLAYER_CYCLES), .pulse(playerD_pulse));  
 
-    
+     counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace), .reset_n_pulse_1(w_reset_cgrace_pulse1) , .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
 endmodule
 
 //module datapath(clock, reset_n,);
@@ -253,7 +260,8 @@ endmodule
 
 module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
  load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
- playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing, objects_reset);
+ playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing, objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n
+, collision_grace_counter_resetn_pulse1);
 
     input clock, reset_n;
     input [9:0] SW_in;    
@@ -267,6 +275,14 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     //Controls memory reset
     output reg memReset;
     
+    // inputs 1 iff collision grace period is over
+    input collision_grace_over_pulse;
+    
+    // reset output signal to collision grace counter
+    output reg collision_grace_counter_reset_n;
+    output reg collision_grace_counter_resetn_pulse1;
+    
+
     // temporary variables to store car coord/color during collision detection
     reg [7:0] checkX;
     reg [7:0] checkY;
@@ -378,6 +394,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     begin
        start_game = 0;
        start_reset_processing = 0;
+       collision_grace_counter_reset_n = 1;
+       collision_grace_counter_resetn_pulse1 = 1;
     end          
                
     always @(*)
@@ -528,6 +546,9 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                               // Updates the score
                                               score_out = `MAX_Y - curr_playerY;
                                               load_score = 1'b1;
+
+                                             
+                                                
                                            end
           S_COLLISION_DETECTION: begin
                                     for (i = 0; i<=44; i=i+1)
@@ -541,14 +562,17 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                        begin
                                           checkColor[j] = color[3*i + j];
                                        end
-                                       if(checkX == curr_playerX && checkY == curr_playerY && checkColor!= 3'b000)
+                                       if(checkX == curr_playerX && checkY == curr_playerY && checkColor!= 3'b000 && collision_grace_over_pulse)
                                        begin
                                              lives_out = lives - 4'b0001;
                                              load_lives = 1'b1;
+                                             collision_grace_counter_reset_n = 0;
+                                             
                                        end
                                     end
                                  end
            S_COLLISION_DETECTION_CYCLE2: begin
+                                            collision_grace_counter_reset_n = 1;
                                             if(lives == 0)
                                             begin
                                                start_game = 1'b0;
@@ -565,7 +589,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                         start_game = 1'b0;
                         start_reset_processing = 1'b1;
                         objects_reset = 1'b0;
-                        
+                        collision_grace_counter_resetn_pulse1 = 0;
+                        collision_grace_counter_reset_n = 1;
                      end
            S_CLEAR_SCREEN: begin
 
@@ -591,6 +616,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                 end
          S_CLEAR_SCREEN_END: begin
                                 // counter = 0;
+                                collision_grace_counter_resetn_pulse1 = 1;
                                 memReset = 1'b0;
                                 start_reset_processing = 1'b0;
                              end
@@ -606,7 +632,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
             current_state = S_RESET1;
         else
             current_state = next_state;
-
+        
+        
         case (current_state)
              S_UPDATE_GRAPHICS_CLEAR_CYCLE1: car_index = car_index + 1;
              S_UPDATE_GRAPHICS_CARS_CYCLE1: car_index = car_index + 1;
@@ -619,6 +646,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
              S_CLEAR_SCREEN_END: counter = 0;
              
         endcase
+
    end // state_FFS
                 
    assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE1 || current_state == S_UPDATE_GRAPHICS_CARS_CYCLE1 || current_state == S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 ||
@@ -1185,7 +1213,7 @@ module RateDivider (clock, reset_n, enable, period, pulse);
 endmodule
 
 /**
-Input: clock, reset_n, limit
+Input: clock, reset_n, limit, reset_n_pulse_1
 Output: pulse
 
 This module implements a counter
@@ -1194,10 +1222,12 @@ Once limit is reached pulse will be
 generated on the next posedge of clock.
 reset_n resets the q value
 to 0 to allow the counter to count again.
+reset_n_pulse is also an active low reset, but
+sets pulse to 1 instad of 0.
 **/
-module counter(clock, reset_n, pulse, limit);
+module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
 
-   input clock, reset_n;
+   input clock, reset_n, reset_n_pulse_1;
    input [25:0] limit;
 
    output reg pulse;
@@ -1207,7 +1237,7 @@ module counter(clock, reset_n, pulse, limit);
    initial
    begin
       q = 0;
-      pulse = 0;
+      pulse = 1;
    end
    
    always @(posedge clock)
@@ -1217,8 +1247,16 @@ module counter(clock, reset_n, pulse, limit);
          q = 0;
          pulse = 0;
       end
-      else
+      
+      if(!reset_n_pulse_1)
       begin
+         q = 0;
+         pulse = 1;
+      end
+      
+      if(reset_n && reset_n_pulse_1)
+      begin
+         
          if(q == limit)
          begin
             pulse = 1;
