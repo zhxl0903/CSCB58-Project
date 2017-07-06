@@ -84,6 +84,17 @@ periods of the divders, we are fine as long as we go back to the wait state in t
 We will need wires allowing simul-update of the memory (e.g. updating type1, type2, and type3 enemy data simulataenously.
 Each control unit can output the update signal to different wires to turn on the update for the specific type of enermy.
 
+Since the collision detection period is shorter than the movement period of cars, wouldn't the player's
+life drop really fast during collision?
+
+Answer: 
+
+Solution 1: We can use a counter to implement a grace period during which the player is immune to
+further collisions. After a collision, the counter will start counting during which time the player
+is immortal. Once counter ends counting, player will lose hp as usual upon collision. The counter
+should count clock cycles slightly higher than the player movement update speed so that the player has sufficient time
+to move out of the collision coordinate.
+
 
 
 
