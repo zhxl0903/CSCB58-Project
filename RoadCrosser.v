@@ -461,7 +461,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                              end
 
            S_UPDATE_GRAPHICS: begin
-                                 car_index = 0;
+                                 // car_index = 0;
                                  curr_x = x;
                                  curr_y = y;
                                  curr_playerX = playerX;
@@ -479,10 +479,10 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                     end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE1: begin
                                             
-                                             car_index = car_index + 1;
+                                             // car_index = car_index + 1;
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_CARS_END: begin
-                                               car_index = 0;
+                                               // car_index = 0;
                                             end   
           S_UPDATE_GRAPHICS_CLEAR_PLAYER: begin
                                              vga_x = curr_playerX;
@@ -491,7 +491,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_END: begin
                                           // Initializes car index for updating cars on the screen
-                                          car_index = 0;
+                                          // car_index = 0;
                                        end
           S_UPDATE_GRAPHICS_CARS: begin
                                      for (i=0; i<=7; i=i+1)
@@ -511,10 +511,10 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                   end
           S_UPDATE_GRAPHICS_CARS_CYCLE1: begin
                                            
-                                              car_index = car_index + 1;
+                                              // car_index = car_index + 1;
                                          end
           S_UPDATE_GRAPHICS_CARS_END: begin
-                                         car_index = 0;
+                                         // car_index = 0;
                                       end
           S_UPDATE_GRAPHICS_PLAYER: begin
                                        curr_playerX = playerX;
@@ -561,7 +561,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                end
                             end
            S_RESET1: begin
-                        counter = 0;
+                        // counter = 0;
                         start_game = 1'b0;
                         start_reset_processing = 1'b1;
                         objects_reset = 1'b0;
@@ -587,10 +587,10 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
          
          S_CLEAR_SCREEN_CYCLE1: begin
                                   
-                                   counter = counter + 1;
+                                   // counter = counter + 1;
                                 end
          S_CLEAR_SCREEN_END: begin
-                                counter = 0;
+                                // counter = 0;
                                 memReset = 1'b0;
                                 start_reset_processing = 1'b0;
                              end
@@ -603,9 +603,22 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
    always@(posedge clock)
    begin: state_FFs
         if(!reset_n)
-            current_state <= S_RESET1;
+            current_state = S_RESET1;
         else
-            current_state <= next_state;
+            current_state = next_state;
+
+        case (current_state)
+             S_UPDATE_GRAPHICS_CLEAR_CYCLE1: car_index = car_index + 1;
+             S_UPDATE_GRAPHICS_CARS_CYCLE1: car_index = car_index + 1;
+             S_CLEAR_SCREEN_CYCLE1: counter = counter + 1;
+             S_UPDATE_GRAPHICS: car_index = 0;
+             S_UPDATE_GRAPHICS_CARS_END: car_index = 0;
+             S_UPDATE_GRAPHICS_CLEAR_CARS_END : car_index = 0;
+             S_UPDATE_GRAPHICS_CLEAR_END: car_index = 0;
+             S_RESET1: counter = 0;
+             S_CLEAR_SCREEN_END: counter = 0;
+             
+        endcase
    end // state_FFS
                 
    assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE1 || current_state == S_UPDATE_GRAPHICS_CARS_CYCLE1 || current_state == S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 ||
