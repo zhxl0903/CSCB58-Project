@@ -1185,6 +1185,53 @@ module RateDivider (clock, reset_n, enable, period, pulse);
 endmodule
 
 /**
+Input: clock, reset_n, limit
+Output: pulse
+
+This module implements a counter
+that counts up to the limit value. 
+Once limit is reached pulse will be
+generated on the next posedge of clock.
+reset_n resets the q value
+to 0 to allow the counter to count again.
+**/
+module counter(clock, reset_n, pulse, limit);
+
+   input clock, reset_n;
+   input [25:0] limit;
+
+   output reg pulse;
+   reg [25:0] q;
+   
+   // initializes q and pulse value
+   initial
+   begin
+      q = 0;
+      pulse = 0;
+   end
+   
+   always @(posedge clock)
+   begin
+      if(!reset_n)
+      begin
+         q = 0;
+         pulse = 0;
+      end
+      else
+      begin
+         if(q == limit)
+         begin
+            pulse = 1;
+         end
+         else
+         begin
+            q = q + 1;
+         end
+      end
+   end
+endmodule 
+
+/**
 Input: c
 Output: HEX
 
