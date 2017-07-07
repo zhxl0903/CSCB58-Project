@@ -83,7 +83,7 @@ module RoadCrosser
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
 	// image file (.MIF) for the controller.
-	vga_adapter VGA(
+	/**vga_adapter VGA(
 			.resetn(resetn),
 			.clock(CLOCK_50),
 			.colour(colour),
@@ -102,7 +102,7 @@ module RoadCrosser
 		defparam VGA.RESOLUTION = "160x120";
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
-		defparam VGA.BACKGROUND_IMAGE = "black.mif";
+		defparam VGA.BACKGROUND_IMAGE = "black.mif";**/
 			
 	// Put your code here. Your code should produce signals x,y,colour and writeEn/plot
 	// for the VGA controller, in addition to any other functionality your design may require.
@@ -389,14 +389,18 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                S_CLEAR_SCREEN = 7'd22,
                S_CLEAR_SCREEN_CYCLE1 = 7'd29,
                S_CLEAR_SCREEN_CYCLE2 = 7'd30,
-               S_CLEAR_SCREEN_END = 7'd23;
-               
+               S_CLEAR_SCREEN_END = 7'd23,
+               S_INIT_DATA_WAIT2 = 7'd37;
     initial
     begin
        start_game = 0;
        start_reset_processing = 0;
        collision_grace_counter_reset_n = 1;
        collision_grace_counter_resetn_pulse1 = 1;
+       vga_x = 0;
+       vga_y = 0;
+       vga_color = 0;
+       plot = 0;
     end          
                
     always @(*)
@@ -411,7 +415,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
               S_N_CARS3_INPUT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_N_CARS3_INPUT;
               S_N_CARS3_INPUT_WAIT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_INIT_DATA;
               S_INIT_DATA: next_state = S_INIT_DATA_WAIT;
-              S_INIT_DATA_WAIT: next_state = S_UPDATE_GRAPHICS;
+              S_INIT_DATA_WAIT: next_state = S_INIT_DATA_WAIT2;
+              S_INIT_DATA_WAIT2: next_state = S_UPDATE_GRAPHICS;
               S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR_END; // changed for testing
               S_UPDATE_GRAPHICS_CLEAR: next_state =  S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE2;
@@ -476,16 +481,21 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                            reset_score = 1'b1;
                         end
            S_INIT_DATA_WAIT: begin
-                                start_game = 1'b1;
+                                
 										  
                              end
-
-           S_UPDATE_GRAPHICS: begin
-                                 // car_index = 0;
+           S_INIT_DATA_WAIT2: begin
+                                 start_game = 1'b1;
+                                 
+                                 // Sets current object positions to initial positions
                                  curr_x = x;
                                  curr_y = y;
                                  curr_playerX = playerX;
                                  curr_playerY = playerY;
+                              end
+           S_UPDATE_GRAPHICS: begin
+                                 // car_index = 0;
+                                 
                               end
            S_UPDATE_GRAPHICS_CLEAR: begin
 
