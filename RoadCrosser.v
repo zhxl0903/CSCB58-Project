@@ -232,11 +232,11 @@ module RoadCrosser
      .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(colour), .vga_x(x), .vga_y(y), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset)
      , .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace), .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
 
-     controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
+     controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
 
-     controlCar cCar1 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse), .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car1), .x_out(w_car1_x_ram_in), .y_out(w_car1_y_ram_in), .color_out(w_car1_color_ram_in));
-     controlCar cCar2 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car2D_reset), .divider_enable(car2D_enable), .pulse_in(car2D_pulse), .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .n_cars(w_n_car2_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
-     controlCar cCar3 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car3D_reset), .divider_enable(car3D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out), .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .n_cars(w_n_car3_ram_out), .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
+     controlCar cCar1 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse), .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car1), .x_out(w_car1_x_ram_in), .y_out(w_car1_y_ram_in), .color_out(w_car1_color_ram_in));
+     controlCar cCar2 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(car2D_reset), .divider_enable(car2D_enable), .pulse_in(car2D_pulse), .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .n_cars(w_n_car2_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
+     controlCar cCar3 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(car3D_reset), .divider_enable(car3D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out), .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .n_cars(w_n_car3_ram_out), .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
 
      memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out), .n_car2_out(w_n_car2_ram_out), .n_car3_out(w_n_car3_ram_out), .n_car1_in(w_n_car1_ram_in), .n_car2_in(w_n_car2_ram_in), .n_car3_in(w_n_car3_ram_in), .car1_x_in(w_car1_x_ram_in), .car2_x_in(w_car2_x_ram_in), .car3_x_in(w_car3_x_ram_in), .car1_y_in(w_car1_y_ram_in),
      .car2_y_in(w_car2_y_ram_in), .car3_y_in(w_car3_y_ram_in), .car1_color_in(w_car1_color_ram_in), .car2_color_in(w_car2_color_ram_in), .car3_color_in(w_car3_color_ram_in), .player_x_in(w_player_x_ram_in), .player_y_in(w_player_y_ram_in), .player_color_in(w_player_color_ram_in), .lives_in(w_lives_ram_in), .score_in(w_score_ram_in), .load_car1(w_load_car1), .load_car2(w_load_car2), .load_car3(w_load_car3), .load_num_cars(w_load_num_cars), .load_player(w_load_player), .load_lives(w_load_lives),
@@ -400,7 +400,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
        vga_x = 0;
        vga_y = 0;
        vga_color = 0;
-       plot = 0;
+
     end          
                
     always @(*)
@@ -1102,7 +1102,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   begin
                      tempX = 0;
                      tempY = i*2;
-                     tempColor = 4;
+                     tempColor = (i<n_car1_out) ? 4:0;
                      
                      for (j=0; j<=7; j=j+1)
                      begin
@@ -1120,7 +1120,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   begin
                      tempX = 0;
                      tempY = i*2;
-                     tempColor = 2;
+                     tempColor = (i-15<n_car2_out) ? 2 : 0;
                      
                      for (j=0; j<=7; j=j+1)
                      begin
@@ -1138,7 +1138,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   begin
                      tempX = 0;
                      tempY = i*2;
-                     tempColor = 5;
+                     tempColor = (i-30 < n_car3_out) ? 5 : 0;
                      
                      for (j=0; j<=7; j=j+1)
                      begin
