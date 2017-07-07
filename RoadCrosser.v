@@ -20,10 +20,10 @@
 `define PLAYER_COLOR 1
 
 // Periods of Cars
-`define CAR1_CYCLES 26'd9999999
-`define CAR2_CYCLES 26'd19999999
-`define CAR3_CYCLES 26'd24999999
-`define PLAYER_CYCLES 26'd14999999
+`define CAR1_CYCLES 26'd9999999//26'd49999999//26'd9999999
+`define CAR2_CYCLES 26'd19999999//26'd49999999//26'd19999999
+`define CAR3_CYCLES 26'd24999999//26'd49999999//26'd24999999
+`define PLAYER_CYCLES 26'd14999999//26'd49999999//26'd14999999
 
 // Period of collision grace
 `define COLLISION_GRACE_PERIOD 26'd16000000
@@ -83,7 +83,7 @@ module RoadCrosser
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
 	// image file (.MIF) for the controller.
-	/*vga_adapter VGA(
+	vga_adapter VGA(
 			.resetn(resetn),
 			.clock(CLOCK_50),
 			.colour(colour),
@@ -102,7 +102,7 @@ module RoadCrosser
 		defparam VGA.RESOLUTION = "160x120";
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
-		defparam VGA.BACKGROUND_IMAGE = "black.mif";*/
+		defparam VGA.BACKGROUND_IMAGE = "black.mif";
 			
 	// Put your code here. Your code should produce signals x,y,colour and writeEn/plot
 	// for the VGA controller, in addition to any other functionality your design may require.
@@ -235,8 +235,8 @@ module RoadCrosser
      controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
 
      controlCar cCar1 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse), .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car1), .x_out(w_car1_x_ram_in), .y_out(w_car1_y_ram_in), .color_out(w_car1_color_ram_in));
-     controlCar cCar2 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car2D_reset), .divider_enable(car2D_enable), .pulse_in(car2D_pulse), .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
-     controlCar cCar3 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car3D_reset), .divider_enable(car3D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out), .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
+     controlCar cCar2 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car2D_reset), .divider_enable(car2D_enable), .pulse_in(car2D_pulse), .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .n_cars(w_n_car2_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
+     controlCar cCar3 (.clock(CLOCK_50), .reset_n(objects_reset), .start_game(startGameOut), .reset_divider(car3D_reset), .divider_enable(car3D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out), .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .n_cars(w_n_car3_ram_out), .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
 
      memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out), .n_car2_out(w_n_car2_ram_out), .n_car3_out(w_n_car3_ram_out), .n_car1_in(w_n_car1_ram_in), .n_car2_in(w_n_car2_ram_in), .n_car3_in(w_n_car3_ram_in), .car1_x_in(w_car1_x_ram_in), .car2_x_in(w_car2_x_ram_in), .car3_x_in(w_car3_x_ram_in), .car1_y_in(w_car1_y_ram_in),
      .car2_y_in(w_car2_y_ram_in), .car3_y_in(w_car3_y_ram_in), .car1_color_in(w_car1_color_ram_in), .car2_color_in(w_car2_color_ram_in), .car3_color_in(w_car3_color_ram_in), .player_x_in(w_player_x_ram_in), .player_y_in(w_player_y_ram_in), .player_color_in(w_player_color_ram_in), .lives_in(w_lives_ram_in), .score_in(w_score_ram_in), .load_car1(w_load_car1), .load_car2(w_load_car2), .load_car3(w_load_car3), .load_num_cars(w_load_num_cars), .load_player(w_load_player), .load_lives(w_load_lives),
@@ -341,7 +341,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     input go;
     
     // state registers
-    reg [6:0] current_state, next_state;
+    reg [6:0] current_state;
+	 reg [6:0] next_state;
     
     // stores index of car during graphic update
     integer car_index;
@@ -411,8 +412,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
               S_N_CARS3_INPUT_WAIT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_INIT_DATA;
               S_INIT_DATA: next_state = S_INIT_DATA_WAIT;
               S_INIT_DATA_WAIT: next_state = S_UPDATE_GRAPHICS;
-              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR;
-              S_UPDATE_GRAPHICS_CLEAR: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
+              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR_END; // changed for testing
+              S_UPDATE_GRAPHICS_CLEAR: next_state =  S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE2: next_state = (car_index == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END  : S_UPDATE_GRAPHICS_CLEAR;
               S_UPDATE_GRAPHICS_CLEAR_CARS_END: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER; 
@@ -425,8 +426,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
               S_UPDATE_GRAPHICS_CARS_CYCLE2: next_state = (car_index == 45) ?  S_UPDATE_GRAPHICS_CARS_END : S_UPDATE_GRAPHICS_CARS;
               S_UPDATE_GRAPHICS_CARS_END: next_state = S_UPDATE_GRAPHICS_PLAYER;
               S_UPDATE_GRAPHICS_PLAYER: next_state = S_UPDATE_GRAPHICS_PLAYER_CYCLE1;
-              S_UPDATE_GRAPHICS_PLAYER_CYCLE1: next_state = S_COLLISION_DETECTION;
-              S_COLLISION_DETECTION: next_state = S_COLLISION_DETECTION_END;
+              S_UPDATE_GRAPHICS_PLAYER_CYCLE1: next_state = S_COLLISION_DETECTION; // changed for testing
+              S_COLLISION_DETECTION: next_state = S_COLLISION_DETECTION_CYCLE1;
               S_COLLISION_DETECTION_CYCLE1: next_state = S_COLLISION_DETECTION_CYCLE2;
               S_COLLISION_DETECTION_CYCLE2: next_state = S_COLLISION_DETECTION_END;
               S_COLLISION_DETECTION_END: next_state = (start_game) ?  S_WIN_DETECTION : S_RESET1;
@@ -476,6 +477,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                         end
            S_INIT_DATA_WAIT: begin
                                 start_game = 1'b1;
+										  
                              end
 
            S_UPDATE_GRAPHICS: begin
@@ -514,12 +516,14 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
           S_UPDATE_GRAPHICS_CARS: begin
                                      for (i=0; i<=7; i=i+1)
                                      begin
+												    // Stores coordinate plotted for clearing later
+                                        curr_x[car_index*8+i] = x[car_index*8 + i];
+                                        curr_y[car_index*8+i] = y[car_index*8 + i];
+													 
                                         vga_x[i] = x[car_index*8 + i];
                                         vga_y[i] = y[car_index*8 + i];
                                         
-                                        // Stores coordinate plotted for clearing later
-                                        curr_x[i] = x[car_index*8 + i];
-                                        curr_y[i] = x[car_index*8 + i];
+                                        
                                      end
                                      
                                      for (i=0; i<=2; i=i+1)
@@ -983,7 +987,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
             playerX = 8'b0000_0000;
             playerY = 8'b0000_0000;
             playerColor = 3'b000;
-   	    lives = 4'b0001;
+   	      lives = 4'b0001;
         end
         else
         begin
@@ -992,38 +996,38 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
              begin
                           // Updates Car1 data
                           for (i=0; i<=14; i=i+1)
-        		  begin
+								  begin
                                for (j= 8*i; j<= 8*i+7; j=j+1)
                                begin
                                   x[j] = car1_x_in[j-8*i];
-           			  y[j] = car1_y_in[j];
+											 y[j] = car1_y_in[j];
                                end
-           		       for (j=3*i; j<=3*i+2; j=j+1)
+           		                for (j=3*i; j<=3*i+2; j=j+1)
                                begin
                                   color[j] = car1_color_in[j];
                                end   
            			
-       			  end
+       			           end
                end
                if(load_car2)
                begin
 
                           // Updates Car2 data
                           for (i=15; i<=29; i=i+1)
-        		  begin
+								  begin
                                for (j= 8*i; j<= 8*i+7; j=j+1)
                                begin
                                   x[j] = car2_x_in[j-8*i];
-           			  y[j] = car2_y_in[j-120];
+           			                y[j] = car2_y_in[j-120];
                                end
-           		       for (j=3*i; j<=3*i+2; j=j+1)
+           		                for (j=3*i; j<=3*i+2; j=j+1)
                                begin
                                   color[j] = car2_color_in[j-45];
                                end   
            			//x[8*i+7:8*i] <= car2_x_in;
            			//y[8*i+7:8*i] <= car2_y_in[8*(i-15)+7:8*(i-15)];
            			//color[3*i+2:3*i] <= car2_color_in[3*(i-15)+2:3*(i-15)];
-       			  end
+									end
                       
                end
 
@@ -1188,14 +1192,14 @@ module RateDivider (clock, reset_n, enable, period, pulse);
    
         if(!reset_n)
         begin
-           pulse <= 0;
+            pulse <= 0;
        	   q <= 0;
         end
         else if(enable)
         begin
                 // peforms normal counting and pulsing if enabled
         	if (q == period) 
-       	 	begin
+       	begin
             		// q reset to 0
             		q <= 0; 
 
