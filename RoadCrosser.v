@@ -340,7 +340,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     
     // state registers
     reg [6:0] current_state;
-	 reg [6:0] next_state;
+    reg [6:0] next_state;
     
     // stores index of car during graphic update
     integer car_index;
@@ -398,6 +398,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
        vga_x = 0;
        vga_y = 0;
        vga_color = 0;
+       car_index = 0;
+       counter = 0;
 
     end          
                
