@@ -998,7 +998,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
             playerX = 8'b0000_0000;
             playerY = 8'b0000_0000;
             playerColor = 3'b000;
-   	      lives = 4'b0001;
+   	    lives = 4'b0001;
         end
         else
         begin
@@ -1102,7 +1102,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   for (i=0; i<=14; i=i+1)
                   begin
                      tempX = 0;
-                     tempY = i*2;
+                     tempY = (i+1)*2;
                      tempColor = (i<n_car1_out) ? 4:0;
                      
                      for (j=0; j<=7; j=j+1)
@@ -1120,7 +1120,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   for (i=15; i<=29; i=i+1)
                   begin
                      tempX = 0;
-                     tempY = i*2;
+                     tempY = (i+1)*2;
                      tempColor = (i-15<n_car2_out) ? 2 : 0;
                      
                      for (j=0; j<=7; j=j+1)
@@ -1138,7 +1138,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   for (i=30; i<=44; i=i+1)
                   begin
                      tempX = 0;
-                     tempY = i*2;
+                     tempY = (i+1)*2;
                      tempColor = (i-30 < n_car3_out) ? 5 : 0;
                      
                      for (j=0; j<=7; j=j+1)
