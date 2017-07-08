@@ -349,6 +349,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     integer j;
 
     reg [15:0] counter;
+
+    reg observed_changes;
  
     localparam
                S_LIVES_INPUT            = 7'd0,
@@ -388,7 +390,11 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                S_CLEAR_SCREEN_CYCLE1 = 7'd29,
                S_CLEAR_SCREEN_CYCLE2 = 7'd30,
                S_CLEAR_SCREEN_END = 7'd23,
-               S_INIT_DATA_WAIT2 = 7'd37;
+               S_INIT_DATA_WAIT2 = 7'd37,
+               S_OBSERVE_INIT = 7'd40,
+               S_OBSERVE_CHANGES = 7'd38,
+               S_MAKE_DECISION_BASED_ON_OBSERVATIONS = 7'd39;
+               
     initial
     begin
        start_game = 0;
@@ -400,6 +406,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
        vga_color = 0;
        car_index = 0;
        counter = 0;
+       observed_changes = 0;
 
     end          
                
@@ -416,8 +423,11 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
               S_N_CARS3_INPUT_WAIT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_INIT_DATA;
               S_INIT_DATA: next_state = S_INIT_DATA_WAIT;
               S_INIT_DATA_WAIT: next_state = S_INIT_DATA_WAIT2;
-              S_INIT_DATA_WAIT2: next_state = S_UPDATE_GRAPHICS;
-              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR_END; // changed for testing
+              S_INIT_DATA_WAIT2: next_state =  S_OBSERVE_INIT; //S_UPDATE_GRAPHICS;
+              S_OBSERVE_INIT: next_state = S_OBSERVE_CHANGES;
+              S_OBSERVE_CHANGES: next_state = S_MAKE_DECISION_BASED_ON_OBSERVATIONS;
+              S_MAKE_DECISION_BASED_ON_OBSERVATIONS : next_state = observed_changes ? S_UPDATE_GRAPHICS : S_OBSERVE_INIT;
+              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR; // changed for testing
               S_UPDATE_GRAPHICS_CLEAR: next_state =  S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE2: next_state = (car_index == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END  : S_UPDATE_GRAPHICS_CLEAR;
@@ -437,7 +447,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
               S_COLLISION_DETECTION_CYCLE2: next_state = S_COLLISION_DETECTION_END;
               S_COLLISION_DETECTION_END: next_state = (start_game) ?  S_WIN_DETECTION : S_RESET1;
               S_WIN_DETECTION: next_state = S_WIN_DETECTION_END;
-              S_WIN_DETECTION_END: next_state = start_game ?  S_UPDATE_GRAPHICS : S_RESET1;
+              S_WIN_DETECTION_END: next_state = start_game ?  S_OBSERVE_INIT : S_RESET1;
               S_RESET1: next_state = S_CLEAR_SCREEN;
               S_CLEAR_SCREEN: next_state = S_CLEAR_SCREEN_CYCLE1;
               S_CLEAR_SCREEN_CYCLE1: next_state = S_CLEAR_SCREEN_CYCLE2;
@@ -495,6 +505,21 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                  curr_playerX = playerX;
                                  curr_playerY = playerY;
                               end
+           S_OBSERVE_INIT : begin
+                               observed_changes = 0;
+                            end
+           S_OBSERVE_CHANGES: begin
+
+                                 // sets observed_changes to 1 iff changes in the coordinates or colors are observed
+                                 if(curr_x != x || curr_y != y || curr_playerX != playerX || curr_playerY != playerY)
+                                 begin
+                                    observed_changes = 1;
+                                 end
+                              end
+
+           S_MAKE_DECISION_BASED_ON_OBSERVATIONS : begin
+                                                      
+                                                   end
            S_UPDATE_GRAPHICS: begin
                                  // car_index = 0;
                                  
@@ -607,6 +632,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                         objects_reset = 1'b0;
                         collision_grace_counter_resetn_pulse1 = 0;
                         collision_grace_counter_reset_n = 1;
+                        observed_changes = 0;
                      end
            S_CLEAR_SCREEN: begin
 
