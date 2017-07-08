@@ -423,7 +423,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
               S_N_CARS3_INPUT_WAIT: next_state = go ? S_N_CARS3_INPUT_WAIT : S_INIT_DATA;
               S_INIT_DATA: next_state = S_INIT_DATA_WAIT;
               S_INIT_DATA_WAIT: next_state = S_INIT_DATA_WAIT2;
-              S_INIT_DATA_WAIT2: next_state =  S_OBSERVE_INIT; //S_UPDATE_GRAPHICS;
+              S_INIT_DATA_WAIT2: next_state =  S_UPDATE_GRAPHICS; 
               S_OBSERVE_INIT: next_state = S_OBSERVE_CHANGES;
               S_OBSERVE_CHANGES: next_state = S_MAKE_DECISION_BASED_ON_OBSERVATIONS;
               S_MAKE_DECISION_BASED_ON_OBSERVATIONS : next_state = observed_changes ? S_UPDATE_GRAPHICS : S_OBSERVE_INIT;
