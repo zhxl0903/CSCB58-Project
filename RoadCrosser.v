@@ -1,4 +1,3 @@
-// Part 2 skeleton
 
 // Max coords
 `define MAX_X 159
@@ -44,7 +43,7 @@ module RoadCrosser
 		VGA_R,   						//	VGA Red[9:0]
 		VGA_G,	 						//	VGA Green[9:0]
 		VGA_B,                                                  //	VGA Blue[9:0]
- 		HEX0, HEX1, HEX2, HEX3				
+ 		HEX0, HEX1, HEX2				
 	);
 
 	input			CLOCK_50;				//	50 MHz
@@ -54,7 +53,6 @@ module RoadCrosser
         output [6:0] HEX0;  // score
         output [6:0] HEX1;  // score
         output [6:0] HEX2;  // lives
-        output [6:0] HEX3;
 
 	// Declare your inputs and outputs here
 	// Do not change the following outputs
@@ -71,7 +69,7 @@ module RoadCrosser
 	assign resetn = SW[9];
         
 	
-	// Create the colour, x, y and writeEn wires that are inputs to the controller.
+	// Create the colour, x, y and writeEn wires that are vga inputs from controller output.
 	wire [2:0] colour;
 	wire [7:0] x;
 	wire [7:0] y;
@@ -103,30 +101,29 @@ module RoadCrosser
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
 		defparam VGA.BACKGROUND_IMAGE = "black.mif";**/
-			
-	// Put your code here. Your code should produce signals x,y,colour and writeEn/plot
-	// for the VGA controller, in addition to any other functionality your design may require.
     
      // load parameters from master control to RAM
      wire w_load_num_cars;
-     wire w_load_lives, w_load_score, w_reset_score, w_init_cars_data, w_init_player_data;
+     wire w_load_lives, w_load_score, w_init_cars_data, w_init_player_data;
 
-     // wires for load objects parameters for the RAM
+     // resets score in memory (1 => reset)
+     wire w_reset_score; 
+
+     // wires for load objects parameters from RAM to the corresponding object controls
      wire w_load_car1, w_load_car2, w_load_car3, w_load_player;
 
-     // wires for score out from RAM (digits from right to left)
+     // wires for score output from RAM (digits: LSB at 0; MSB at 7)
+     // score is based on Y coordinate
      wire [7:0] w_score; 
 
      // wire for score input into RAM from master control
      wire [7:0] w_score_ram_in;
-    
      
      // wire for lives output from ram
      wire [3:0] w_lives;
      
      // wire for lives input into ram
      wire [3:0] w_lives_ram_in;
-     
      
      // wire for number of cars output from ram
      wire [3:0] w_n_car1_ram_out;
@@ -149,13 +146,14 @@ module RoadCrosser
      // wire for signal status for start reset processing from control master
      wire w_start_reset_processing;
      
-     // wire to store SW in to master control
+     // wire to input SW into master control
+     // Resetn for master control is controlled by SW[9] separately without using this wire
      wire [9:0] SW_master_control_in;
      
-     // wire for the go singnal into master control
+     // wire for to input the go singnal into master control
      wire go_master_control_in;
      
-     // go and SW inputs are eanbled iff game is not resetting of running the level
+     // go and SW inputs are eanbled iff game is not resetting or running the level
      assign go_master_control_in = (w_start_reset_processing || startGameOut) ? 0 : ~KEY[0];
      assign SW_master_control_in = (w_start_reset_processing || startGameOut) ? 0 : SW;
      
@@ -185,15 +183,15 @@ module RoadCrosser
      wire [44:0] w_car3_color_ram_out;
 
      // assigns ram outputs to wires for cars control inputs
-     assign w_car1_x_ram_out = w_x_ram_out[119:0];
+     assign w_car1_x_ram_out = w_x_ram_out[7:0];
      assign w_car1_y_ram_out = w_y_ram_out[119:0];
      assign w_car1_color_ram_out = w_color_ram_out[44:0];
      
-     assign w_car2_x_ram_out = w_x_ram_out[239:120];
+     assign w_car2_x_ram_out = w_x_ram_out[127:120];
      assign w_car2_y_ram_out = w_y_ram_out[239:120];
      assign w_car2_color_ram_out = w_color_ram_out[89:45];
 
-     assign w_car3_x_ram_out = w_x_ram_out[359:240];
+     assign w_car3_x_ram_out = w_x_ram_out[247:240];
      assign w_car3_y_ram_out = w_y_ram_out[359:240];
      assign w_car3_color_ram_out = w_color_ram_out[134:90];
      
@@ -218,13 +216,13 @@ module RoadCrosser
      wire car1D_enable, car2D_enable, car3D_enable;     
      wire playerD_enable, playerD_reset;
       
-     // wire from divider pulse to cars/player pulse in
+     // wire from divider pulse to cars/player control pulse input
      wire car1D_pulse, car2D_pulse, car3D_pulse, playerD_pulse;
 
-     // object reset wire from master control to other controls
+     // object reset wire from master control to other controls (active low reset)
      wire w_objects_reset;
 
-     // wires connecting collision grace counter module and cMaster
+     // wires connecting collision grace counter module and cMaster (resets are active low)
      wire w_reset_cgrace_pulse1, w_reset_cgrace, w_cgrace_over_pulse;
    
      controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives),
@@ -458,6 +456,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
       init_player_data = 1'b0;
       memReset = 1'b1;
       objects_reset = 1'b1;
+      collision_grace_counter_resetn_pulse1 = 1'b1;
+      collision_grace_counter_reset_n = 1'b1;
       
       case (current_state)
            S_LIVES_INPUT: begin
@@ -886,7 +886,6 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
 endmodule
 
 
-// requires major modifications to change to memory for RoadCrosser game from Pacman
 module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in,
  car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives,
  load_score, reset_score, init_cars_data, init_player_data);
