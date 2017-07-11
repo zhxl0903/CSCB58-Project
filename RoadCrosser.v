@@ -22,6 +22,8 @@
 `define CAR1_CYCLES 26'd9999999//26'd49999999//26'd9999999
 `define CAR2_CYCLES 26'd19999999//26'd49999999//26'd19999999
 `define CAR3_CYCLES 26'd24999999//26'd49999999//26'd24999999
+
+// Update period of player
 `define PLAYER_CYCLES 26'd14999999//26'd49999999//26'd14999999
 
 // Period of collision grace
@@ -225,30 +227,39 @@ module RoadCrosser
      // wires connecting collision grace counter module and cMaster (resets are active low)
      wire w_reset_cgrace_pulse1, w_reset_cgrace, w_cgrace_over_pulse;
    
+     // wiring for master control module
      controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives),
      .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data), .n_car1(w_n_car1_ram_out), .n_car2(w_n_car2_ram_out), .n_car3(w_n_car3_ram_out), .n_car1_out(w_n_car1_ram_in), .n_car2_out(w_n_car2_ram_in), .n_car3_out(w_n_car3_ram_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out),
      .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(colour), .vga_x(x), .vga_y(y), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset)
      , .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace), .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
-
+     
+     // wiring for player control module
      controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
 
+     // wiring for car control modules of different movement speeds
      controlCar cCar1 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse), .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .n_cars(w_n_car1_ram_out), .load_car(w_load_car1), .x_out(w_car1_x_ram_in), .y_out(w_car1_y_ram_in), .color_out(w_car1_color_ram_in));
      controlCar cCar2 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(car2D_reset), .divider_enable(car2D_enable), .pulse_in(car2D_pulse), .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .n_cars(w_n_car2_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
      controlCar cCar3 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(car3D_reset), .divider_enable(car3D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out), .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .n_cars(w_n_car3_ram_out), .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
-
+     
+     // wiring for memory module / datapath 
      memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out), .n_car2_out(w_n_car2_ram_out), .n_car3_out(w_n_car3_ram_out), .n_car1_in(w_n_car1_ram_in), .n_car2_in(w_n_car2_ram_in), .n_car3_in(w_n_car3_ram_in), .car1_x_in(w_car1_x_ram_in), .car2_x_in(w_car2_x_ram_in), .car3_x_in(w_car3_x_ram_in), .car1_y_in(w_car1_y_ram_in),
      .car2_y_in(w_car2_y_ram_in), .car3_y_in(w_car3_y_ram_in), .car1_color_in(w_car1_color_ram_in), .car2_color_in(w_car2_color_ram_in), .car3_color_in(w_car3_color_ram_in), .player_x_in(w_player_x_ram_in), .player_y_in(w_player_y_ram_in), .player_color_in(w_player_color_ram_in), .lives_in(w_lives_ram_in), .score_in(w_score_ram_in), .load_car1(w_load_car1), .load_car2(w_load_car2), .load_car3(w_load_car3), .load_num_cars(w_load_num_cars), .load_player(w_load_player), .load_lives(w_load_lives),
      .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data));
-
+    
+     // wiring for score display on HEX0 and HEX1
      HEXDisplay score1 (.HEX(HEX0[6:0]), .c(w_score[3:0]));
      HEXDisplay score2 (.HEX(HEX1[6:0]), .c(w_score[7:4]));
-     HEXDisplay livesHEX (.HEX(HEX2[6:0]), .c(w_lives));
 
+     // wiring for number of lives display on HEX2
+     HEXDisplay livesHEX (.HEX(HEX2[6:0]), .c(w_lives));
+     
+     // Wiring for rate dividers controlling different speeds of cars and the update rate of the player movements
      RateDivider car1D (.clock(CLOCK_50), .reset_n(car1D_reset), .enable(car1D_enable), .period(`CAR1_CYCLES), .pulse(car1D_pulse));  
      RateDivider car2D (.clock(CLOCK_50), .reset_n(car2D_reset), .enable(car2D_enable), .period(`CAR2_CYCLES), .pulse(car2D_pulse));  
      RateDivider car3D (.clock(CLOCK_50), .reset_n(car3D_reset), .enable(car3D_enable), .period(`CAR3_CYCLES), .pulse(car3D_pulse));  
      RateDivider playerD (.clock(CLOCK_50), .reset_n(playerD_reset), .enable(playerD_enable), .period(`PLAYER_CYCLES), .pulse(playerD_pulse));  
-
+     
+     // Wiring for counter used in collision grace period in master control module
      counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace), .reset_n_pulse_1(w_reset_cgrace_pulse1) , .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
 endmodule
 
@@ -686,8 +697,6 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                 memReset = 1'b0;
                                 start_reset_processing = 1'b0;
                              end
-         
-         
       endcase
       
    end
