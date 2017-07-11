@@ -345,11 +345,16 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     // stores index of car during graphic update
     integer car_index;
     
+    // loop accumulation variables
     integer i;
     integer j;
-
+    
+    // generates coordinates for y and x (8 bit each) to clear the entire screen
+    // during reset
     reg [15:0] counter;
 
+    // controls game update decision based on whether changes to data in memory
+    // ocurred
     reg observed_changes;
  
     localparam
@@ -394,7 +399,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                S_OBSERVE_INIT = 7'd40,
                S_OBSERVE_CHANGES = 7'd38,
                S_MAKE_DECISION_BASED_ON_OBSERVATIONS = 7'd39;
-               
+    
+    // initializes registers for master contro module           
     initial
     begin
        start_game = 0;
@@ -459,7 +465,9 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
 
    always @(*)
    begin
+
       // resets all output to memory instructions by default
+      // sets module active low resets to 1 by default
       load_num_cars = 1'b0;
       load_lives = 1'b0;
       load_score = 1'b0;
@@ -474,6 +482,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
       case (current_state)
            S_LIVES_INPUT: begin
                              
+                             // loads life input which is between 1 and 15 decimal in base 2
                              lives_out = (SW_in[3:0] == 0) ? 1 : SW_in[3:0];
                              load_lives = 1'b1;
                           end
@@ -551,18 +560,21 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                           // car_index = 0;
                                        end
           S_UPDATE_GRAPHICS_CARS: begin
+                                     
+                                     // updates cars on the screen one by one based on car_index
                                      for (i=0; i<=7; i=i+1)
                                      begin
-												    // Stores coordinate plotted for clearing later
+
+					// stores coordinate plotted for clearing and observation later
                                         curr_x[car_index*8+i] = x[car_index*8 + i];
                                         curr_y[car_index*8+i] = y[car_index*8 + i];
-													 
+			                
+                                        // outputs car coordinate to vga module for display bit by bit							 
                                         vga_x[i] = x[car_index*8 + i];
                                         vga_y[i] = y[car_index*8 + i];
-                                        
-                                        
                                      end
                                      
+                                     // outputs car color to vga module for display bit by bit
                                      for (i=0; i<=2; i=i+1)
                                      begin
                                           vga_color[i] = color[car_index*3 + i]; 
@@ -576,43 +588,52 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                          // car_index = 0;
                                       end
           S_UPDATE_GRAPHICS_PLAYER: begin
+
+                                       // stores current player position for clearing and observation purposes
                                        curr_playerX = playerX;
                                        curr_playerY = playerY;
+                                       
+                                       // outputs current player data to vga module for display
                                        vga_x = curr_playerX;
                                        vga_y = curr_playerY;
                                        vga_color = playerColor;
                                     end
           S_UPDATE_GRAPHICS_PLAYER_CYCLE1: begin
-
                                               // Updates the score
                                               score_out = `MAX_Y - curr_playerY;
                                               load_score = 1'b1;
-
-                                             
-                                                
                                            end
           S_COLLISION_DETECTION: begin
                                     for (i = 0; i<=44; i=i+1)
                                     begin
+                                       
+                                       // Prepares car coordinate to be checked for collison with player
                                        for (j = 0; j<=7; j=j+1)
                                        begin
                                           checkX[j] = curr_x[8*i + j];
                                           checkY[j] = curr_y[8*i + j];
                                        end
+ 
+                                       // Prepares current car's color to be checked
                                        for (j = 0; j<=2; j=j+1)
                                        begin
                                           checkColor[j] = color[3*i + j];
                                        end
+
+                                       // Allow collision damage iff collision occurs and car is not invisible(color black) and collision grace period is over
+                                       // Car can be invisible depending on the number of cars set for the game by the player
                                        if(checkX == curr_playerX && checkY == curr_playerY && checkColor!= 3'b000 && collision_grace_over_pulse)
                                        begin
                                              lives_out = lives - 4'b0001;
                                              load_lives = 1'b1;
                                              collision_grace_counter_reset_n = 0;
-                                             
                                        end
                                     end
                                  end
            S_COLLISION_DETECTION_CYCLE2: begin
+                                            
+                                            // turns reset off for collision grace counter
+                                            // ends game if lives reaches 0
                                             collision_grace_counter_reset_n = 1;
                                             if(lives == 0)
                                             begin
@@ -620,12 +641,15 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                             end
                                          end
            S_WIN_DETECTION: begin
+                               
+                               // ends game if player has reached top of the screen
                                if(curr_playerY == 0)
                                begin
                                   start_game = 1'b0;
                                end
                             end
            S_RESET1: begin
+
                         // counter = 0;
                         start_game = 1'b0;
                         start_reset_processing = 1'b1;
@@ -675,7 +699,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
         else
             current_state = next_state;
         
-        
+        // Updates cumulation variables
         case (current_state)
              S_UPDATE_GRAPHICS_CLEAR_CYCLE1: car_index = car_index + 1;
              S_UPDATE_GRAPHICS_CARS_CYCLE1: car_index = car_index + 1;
@@ -686,7 +710,6 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
              S_UPDATE_GRAPHICS_CLEAR_END: car_index = 0;
              S_RESET1: counter = 0;
              S_CLEAR_SCREEN_END: counter = 0;
-             
         endcase
 
    end // state_FFS
@@ -1033,38 +1056,40 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
              begin
                           // Updates Car1 data
                           for (i=0; i<=14; i=i+1)
-								  begin
+			  begin
                                for (j= 8*i; j<= 8*i+7; j=j+1)
                                begin
                                   x[j] = car1_x_in[j-8*i];
-											 y[j] = car1_y_in[j];
+                                  y[j] = car1_y_in[j];
                                end
-           		                for (j=3*i; j<=3*i+2; j=j+1)
+
+           		       for (j=3*i; j<=3*i+2; j=j+1)
                                begin
                                   color[j] = car1_color_in[j];
                                end   
            			
-       			           end
+       			  end
                end
                if(load_car2)
                begin
 
                           // Updates Car2 data
                           for (i=15; i<=29; i=i+1)
-								  begin
+			  begin
                                for (j= 8*i; j<= 8*i+7; j=j+1)
                                begin
                                   x[j] = car2_x_in[j-8*i];
-           			                y[j] = car2_y_in[j-120];
+           			  y[j] = car2_y_in[j-120];
                                end
-           		                for (j=3*i; j<=3*i+2; j=j+1)
+
+           		       for (j=3*i; j<=3*i+2; j=j+1)
                                begin
                                   color[j] = car2_color_in[j-45];
                                end   
            			//x[8*i+7:8*i] <= car2_x_in;
            			//y[8*i+7:8*i] <= car2_y_in[8*(i-15)+7:8*(i-15)];
            			//color[3*i+2:3*i] <= car2_color_in[3*(i-15)+2:3*(i-15)];
-									end
+			  end
                       
                end
 
