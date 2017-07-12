@@ -226,6 +226,9 @@ module RoadCrosser
 
      // wires connecting collision grace counter module and cMaster (resets are active low)
      wire w_reset_cgrace_pulse1, w_reset_cgrace, w_cgrace_over_pulse;
+
+     // wire connecting 90 bit random number generator to memory module
+     wire [89:0] rand_to_mem; 
    
      // wiring for master control module
      controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives),
@@ -244,7 +247,7 @@ module RoadCrosser
      // wiring for memory module / datapath 
      memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out), .n_car2_out(w_n_car2_ram_out), .n_car3_out(w_n_car3_ram_out), .n_car1_in(w_n_car1_ram_in), .n_car2_in(w_n_car2_ram_in), .n_car3_in(w_n_car3_ram_in), .car1_x_in(w_car1_x_ram_in), .car2_x_in(w_car2_x_ram_in), .car3_x_in(w_car3_x_ram_in), .car1_y_in(w_car1_y_ram_in),
      .car2_y_in(w_car2_y_ram_in), .car3_y_in(w_car3_y_ram_in), .car1_color_in(w_car1_color_ram_in), .car2_color_in(w_car2_color_ram_in), .car3_color_in(w_car3_color_ram_in), .player_x_in(w_player_x_ram_in), .player_y_in(w_player_y_ram_in), .player_color_in(w_player_color_ram_in), .lives_in(w_lives_ram_in), .score_in(w_score_ram_in), .load_car1(w_load_car1), .load_car2(w_load_car2), .load_car3(w_load_car3), .load_num_cars(w_load_num_cars), .load_player(w_load_player), .load_lives(w_load_lives),
-     .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data));
+     .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data), .rand_in(rand_to_mem));
     
      // wiring for score display on HEX0 and HEX1
      HEXDisplay score1 (.HEX(HEX0[6:0]), .c(w_score[3:0]));
@@ -261,6 +264,9 @@ module RoadCrosser
      
      // Wiring for counter used in collision grace period in master control module
      counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace), .reset_n_pulse_1(w_reset_cgrace_pulse1) , .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
+     
+     // Wiring for 90 bit random generator module inspired by online sources
+     fibonacci_lfsr_90bit rand(.clk(CLOCK_50),  .rst_n(1),  .data(rand_to_mem));
 endmodule
 
 //module datapath(clock, reset_n,);
@@ -948,7 +954,7 @@ endmodule
 
 module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in,
  car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives,
- load_score, reset_score, init_cars_data, init_player_data);
+ load_score, reset_score, init_cars_data, init_player_data, rand_in);
 
      input clock, reset_n;
      
@@ -986,6 +992,8 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
 
      input [3:0] lives_in;
      input [7:0] score_in;
+
+     input [89:0] rand_in;
 
      // There are 15 car1 + 15 car2 + 15 car3 (8bits each)
      output reg [359:0] x;
@@ -1157,11 +1165,13 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                // initializes car data
                if(init_cars_data)
                begin
-                   
+                  
+                  
                   // Initializes data for car1
+                  tempX = rand_in[7:0] % `MAX_X;
                   for (i=0; i<=14; i=i+1)
                   begin
-                     tempX = 0;
+                     
                      tempY = (i+1)*2;
                      tempColor = (i<n_car1_out) ? 4:0;
                      
@@ -1176,10 +1186,12 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                      end
                   end
                   
+                  
                   // Initializes data for car2
+                  tempX = rand_in[17:10] % `MAX_X;
                   for (i=15; i<=29; i=i+1)
                   begin
-                     tempX = 0;
+                     
                      tempY = (i+1)*2;
                      tempColor = (i-15<n_car2_out) ? 2 : 0;
                      
@@ -1193,11 +1205,13 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                         color[i*3+j] = tempColor[j];
                      end
                   end
-
+                  
+                   
                   // Initializes data for car3
+                  tempX = rand_in[57:50] % `MAX_X;
                   for (i=30; i<=44; i=i+1)
                   begin
-                     tempX = 0;
+                     
                      tempY = (i+1)*2;
                      tempColor = (i-30 < n_car3_out) ? 5 : 0;
                      
