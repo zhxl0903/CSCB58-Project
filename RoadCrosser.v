@@ -570,7 +570,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
           S_UPDATE_GRAPHICS_CLEAR_PLAYER: begin
                                              vga_x = curr_playerX;
                                              vga_y = curr_playerY;
-                                             vga_color = playerColor;
+                                             vga_color = 0;
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_END: begin
                                           // Initializes car index for updating cars on the screen
@@ -587,8 +587,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                         curr_y[car_index*8+i] = y[car_index*8 + i];
 			                
                                         // outputs car coordinate to vga module for display bit by bit							 
-                                        vga_x[i] = x[car_index*8 + i];
-                                        vga_y[i] = y[car_index*8 + i];
+                                        vga_x[i] = curr_x[car_index*8 + i];
+                                        vga_y[i] = curr_y[car_index*8 + i];
                                      end
                                      
                                      // outputs car color to vga module for display bit by bit
