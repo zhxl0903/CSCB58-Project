@@ -28,6 +28,26 @@
 
 // Period of collision grace
 `define COLLISION_GRACE_PERIOD 26'd16000000
+
+/**
+Inputs: SW, KEY, CLOCK_50
+
+Outputs: HEX0, HEX1, HEX2, VGA module outputs
+
+This module serves as the top module for the RoadCrosser
+game. SW[9] is an active low synchronous reset. SW[3:0] are
+used for input of lives and number of mobs of each type.
+Before game starts, player can press KEY[0] as the go button
+after setting the parameters in order: # of Lives, # of cars
+of type 1, # of cars of type 2 # of cars of type 3 (which speeds
+are from fast to slow.)  After game starts, KEY[3:0] are used
+for movements. The game ends either player reaches the top of 
+the screen or when player's lives fall down to 0. Each collision
+decreases the player's life by 1. Score is output to HEX0 and HEX1.
+Number of lives is output to HEX2. The score is not reset on the
+display panels after the game ends. It is reset once the next game 
+begins.
+**/
 module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
@@ -263,20 +283,45 @@ module RoadCrosser
      RateDivider playerD (.clock(CLOCK_50), .reset_n(playerD_reset), .enable(playerD_enable), .period(`PLAYER_CYCLES), .pulse(playerD_pulse));  
      
      // Wiring for counter used in collision grace period in master control module
-     counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace), .reset_n_pulse_1(w_reset_cgrace_pulse1) , .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
+     counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace), .reset_n_pulse_1(w_reset_cgrace_pulse1) ,
+     .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
      
      // Wiring for 90 bit random generator module inspired by online sources
      fibonacci_lfsr_90bit rand(.clk(CLOCK_50),  .rst_n(1),  .data(rand_to_mem));
 endmodule
 
-//module datapath(clock, reset_n,);
+/**
+Inputs: clock, reset_n, x, y, collision_grace_over_pulse, n_car1, n_car2, n_car3,
+        color, playerX, playerY, playerColor, lives, score, go
 
-//module control(clock, reset_n, );
+Outputs: plot, cga_color, vga_x, vga_y, memReset, load_num_cars, load_lives,
+         load_score, reset_score, init_cars_data, init_player_data, 
+         collision_grace_counter_reset_n, collision_grace_counter_resetn_pulse1,
+         objects_reset, start_game, start_reset_processing, n_car1_out, n_car2_out,
+         n_car3_out, lives_out, score_out
 
+This module creates a master control path for the game.
+It is driven by CLOCK_50 and has an active low reset. 
+Numerous inputs and outputs are avaiable to read or
+write to the memory module. Player inputs before the
+game starts are also processed here. Once the game
+starts, the control path performs updates iff changes
+to the data in memory are observed. The updates
+happen in the following order: Clear Previous Objects
+On Screen -> Plot New Objects On Screen -> Detect Collision
+-> Check Winning Condition. If the game ends during this
+process or reset_n is set to 0, the control will jump to
+the S_RESET1 state where all other controls and the memory
+unit is reset and the screen is cleared for the next game.
+Score will not be reset till next game starts to allow
+the player to view the score after the game ends. 
+
+**/
 module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
  load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
- playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing, objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n
-, collision_grace_counter_resetn_pulse1);
+ playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset,
+ start_reset_processing, objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n,
+ collision_grace_counter_resetn_pulse1);
 
     input clock, reset_n;
     input [9:0] SW_in;    
