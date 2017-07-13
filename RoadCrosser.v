@@ -1,4 +1,9 @@
 
+
+/**
+   Global Constant Declarations
+**/
+
 // Max coords
 `define MAX_X 159
 `define MAX_Y 119
@@ -779,6 +784,21 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
  
 endmodule
 
+/**
+Inputs: x, y, color, start_game, up, down, left, right
+
+Outputs: reset_divider, divider_enable, x_out, y_out, color_out, load_player
+
+This module serves as a controlpath for the player in the game.
+It is driven by CLOCK_50 and has an active low reset. Once
+game starts, the control will wait for a pulse from the divider.
+Player movements are enabled once this control path receives 
+a pulse from the divider module. Player movements are controlled
+by KEY[3:0]. Player can only move in one direction at a time. 
+This control unit updates the player's positions by writing
+to the memory module. Data about the player (x, y, and color) can
+also be read from the memory module.
+**/
 module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
 
     input clock, reset_n,  pulse_in;
@@ -823,8 +843,8 @@ module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, 
 
     always @(*)
     begin
-       // By default make all our signals 0
 
+       // By default make all our signals 0
        load_player = 1'b0;
        x_out =0;
        y_out =0;
@@ -832,6 +852,8 @@ module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, 
        
        case (current_state)
            S_UPDATE_INFO: begin
+                             
+                             // Updates player position based on key pressed
                              if(!up)
                              begin
                                 if(y != 8'b0000_0000)
@@ -888,13 +910,26 @@ module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, 
             current_state <= next_state;
     end // state_FFS
     
-    
+    // Divider is enabled and not reset iff game starts
     assign divider_enable = start_game ? 1'b1 : 1'b0;
     assign reset_divider = start_game ? 1'b1 : 1'b0;
 
 endmodule
 
 /**
+Inputs: clock, reset_n, x, y, color, n_cars, start-game
+
+Outputs: reset_divider, divider_enable, x_out, y_out, color_cout,
+         load_car
+
+This module creates a control path for the car object in the game.
+Each such module controls cars of one speed type. All cars of one 
+speed type have the same x position but different y positions on
+the screen. This module is driven by CLOCK_50 and has an active-low
+reset. Once the game starts, this module will wait for a pulse from
+the divider. Updates to the car's positions are performed once pulse
+is received from the divider. This module is also connected to the
+memory module to allow read/write of cars' data from/to memory. 
 **/
 module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, x, y, color, n_cars, load_car, x_out, y_out, color_out);
 
@@ -906,11 +941,13 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
     input [44:0] color;
     input [3:0] n_cars;
 
+    // Start game signal from master control unit
     input start_game;
      
+    // Reset and enable output for the divider
     output reset_divider, divider_enable;
 
-    // output values to memory
+    // output-values to memory
     output reg [7:0] x_out;
     output reg [119:0] y_out;
     output reg [44:0] color_out;
@@ -922,19 +959,7 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
     reg [4:0] current_state, next_state;
     integer i;
 
-    // MAX_X = 159d
-    // MAX_Y = 119d
-    // SAFE_Y_MIN = 100d
-    // SAFE_Y_MAX = 119d
-    // WAR_Y_MIN = 0d
-    // WAR_Y_MAX = 99d
     localparam  
-                //MAX_X           = 8'b1001_1111,
-                //MAX_Y           = 8'b0111_0111,
-                //SAFE_Y_MIN      = 8'b0110_0100,
-                //SAFE_Y_MAX      = 8'b0111_0111,
-                //WAR_Y_MIN       = 8'b0000_0000,
-               // WAR_Y_MAX       = 8'b0110_0011,
                 S_WAIT          = 5'd0,
                 S_WAIT_FOR_PULSE = 5'd1,
                 S_UPDATE_INFO   = 5'd2;
@@ -960,9 +985,12 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
        
        case (current_state)
            S_UPDATE_INFO: begin
-                             // Moves car across the screen and back to x=0 position if MAX_X is reached.
+
+                             
                              if (x != `MAX_X)
                              begin
+                                
+                                // Moves car to the right if MAX_X is not reached
                                 x_out = x + 8'b0000_0001;
                                 y_out = y;
                                 color_out = color;
@@ -970,6 +998,8 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
                              end
                              else
                              begin
+
+                                // Moves car across the screen and back to x=0 position if MAX_X is reached.
                                 x_out = 8'b0000_0000;
                                 y_out = y;
                                 color_out = color;
@@ -981,7 +1011,6 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
     
     end
 
-    // current_state registers
     always@(posedge clock)
     begin: state_FFs
         if(!reset_n)
@@ -996,71 +1025,96 @@ module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pul
    
 endmodule
 
+/**
+Inputs: clock, reset_n, load_car1, load_car2, load_car3, load_num_cars, load_player,
+        load_lives, load_score, reset_score, init_cars_data, init_player_data, n_car1_in,
+        n_car2_in, n_car3_in, car1_x_in, car1_y_in, car2_x_in, car2_y_in, car3_x_in,
+        car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in,
+        player_color_in, lives_in, score_in, rand_in
 
-module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in,
- car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives,
- load_score, reset_score, init_cars_data, init_player_data, rand_in);
+Outputs: n_car1_out, n_car2_out, n_car3_out, x, y, color, playerX, playerY, playerColor,
+         score, lives
 
+This module creates a memory unit for our game. It also functions as a datapath where
+operations allow data to be updated. Data stored inside here can be read and written
+by the controlpath modules including master control, car controls, and player control.
+This memory unit is driven by CLOCK_50 and has an active-low reset. Score is not reset
+by reset_n to allow the player to view the score after the game ends. Score can be 
+reset by the operation reset_score. 8 bit binary numbers are taken from rand_in to initilize
+the three 8 bit x coordinates of the 3 car types when game starts.
+**/
+module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out,
+ n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in,
+ car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2,
+ load_car3, load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
+
+     // CLOCK_50 and active low reset inputs
      input clock, reset_n;
      
-     // memory operation types
-     //input [3:0] op;
-     
-     // new op code inputs
+     // operation signal inputs
      input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score, reset_score, init_cars_data, init_player_data;
 
-     // number of each objects (15 max)
+     // number of each type of car objects (15 max) input
      input [3:0] n_car1_in;
      input [3:0] n_car2_in;
      input [3:0] n_car3_in;
      
+     // Output of number of cars of each type
      output reg [3:0] n_car1_out;
      output reg [3:0] n_car2_out;
      output reg [3:0] n_car3_out;
-
+     
+     // Inputs for car positions of each type
      input [7:0] car1_x_in;
      input [119:0] car1_y_in;
-
+     
      input [7:0] car2_x_in;
      input [119:0] car2_y_in;
 
      input [7:0] car3_x_in;
      input [119:0] car3_y_in;
-    
+     
+     // Inputs for car colors of each type
      input [44:0] car1_color_in;
      input [44:0] car2_color_in;
      input [44:0] car3_color_in;
-
+     
+     // Player data inputs
      input [7:0]player_x_in;
      input [7:0]player_y_in;
      input [2:0]player_color_in;
-
+     
+     // Number of lives and score inputs
      input [3:0] lives_in;
      input [7:0] score_in;
 
+     // 90 bit random number input from random number generator module
      input [89:0] rand_in;
-
+     
+     // Car position outputs
      // There are 15 car1 + 15 car2 + 15 car3 (8bits each)
      output reg [359:0] x;
      output reg [359:0] y;
-
-     // Cars' colors: 3bit each *45 = 135 bits
+     
+     // Car color outputs
+     // Cars' colors: 3bit each * 45 cars = 135 bits
      output reg [134:0] color;
 
-     // Player color and coords
+     // Player color and coords outputs
      output reg [7:0] playerX;
      output reg [7:0] playerY;
      output reg [2:0] playerColor;
      
-     // Score and lives output
+     // Score and lives outputs (15 lives max)
      output reg [7:0] score;
-     output reg [3:0] lives; // max 15 lives
+     output reg [3:0] lives; 
 
      // temp registers for coordinate processing
      reg [7:0] tempX;
      reg [7:0] tempY;
      reg [2:0] tempColor;
-
+     
+     // Loop index variables
      integer i;
      integer j;
      
@@ -1092,7 +1146,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         if(!reset_n)
         begin
             
-            // Score is not reset here. It is reset at the start of the game.
+           // Score is not reset here. It is reset at the start of the game.
            for (i=0; i<=44; i=i+1)
            begin
                for (j=8*i; j<=8*i+7; j=j+1)
@@ -1148,6 +1202,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                                begin
                                   color[j] = car2_color_in[j-45];
                                end   
+
            			//x[8*i+7:8*i] <= car2_x_in;
            			//y[8*i+7:8*i] <= car2_y_in[8*(i-15)+7:8*(i-15)];
            			//color[3*i+2:3*i] <= car2_color_in[3*(i-15)+2:3*(i-15)];
@@ -1186,6 +1241,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                
                if(load_lives)
                begin 
+                         // Loads new number of lives
                          lives = lives_in;
                end
 
