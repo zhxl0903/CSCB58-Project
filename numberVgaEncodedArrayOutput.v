@@ -5,6 +5,7 @@
  *        matrix of pixels, in row by row order, each coordinate is 8 bits
  * @param colorArray is a 45 bit output that represents the rgb values of a 3x5
  *        matrix of pixels, in row by row order, each pixel is 3 bits
+ * @param in is a 4 bit binary input that represents values 0 to F
  */
  module numbersArrayOutput(xArray, yArray, colorArray, in);
    input [3:0]in;
