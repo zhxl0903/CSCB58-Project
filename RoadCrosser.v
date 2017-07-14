@@ -553,6 +553,8 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
       collision_grace_counter_reset_n = 1'b1;
 
       // Data registers are left unchanged by default
+      // To change the registers below from a latch, assign the desired register with
+      // a value other than itself.
       checkX = checkX;
       checkY = checkY;
       checkColor = checkColor;
@@ -565,7 +567,6 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
       n_car3_out = n_car3_out;
       lives_out = lives_out;
       score_out = score_out;
-      
       
       case (current_state)
            S_LIVES_INPUT: begin
