@@ -255,11 +255,22 @@ module RoadCrosser
      // wire connecting 90 bit random number generator to memory module
      wire [89:0] rand_to_mem; 
    
+     // wire for cMaster to VGApath for loading vga values
+     wire w_load_vga;
+     
+     // Data inputs into VGApath from cMaster
+     wire [7:0] w_vgaPath_x_in;
+     wire [7:0] w_vgaPath_y_in;
+     wire [2:0] w_vgaPath_color_in;
+    
      // wiring for master control module
-     controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives),
+     controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut), .load_num_cars(w_load_num_cars), .load_lives(w_load_lives), .load_vga(w_load_vga),
      .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data), .init_player_data(w_init_player_data), .n_car1(w_n_car1_ram_out), .n_car2(w_n_car2_ram_out), .n_car3(w_n_car3_ram_out), .n_car1_out(w_n_car1_ram_in), .n_car2_out(w_n_car2_ram_in), .n_car3_out(w_n_car3_ram_in), .x(w_x_ram_out), .y(w_y_ram_out), .color(w_color_ram_out),
-     .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(colour), .vga_x(x), .vga_y(y), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset)
-     , .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace), .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
+     .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out), .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .lives_out(w_lives_ram_in), .score_out(w_score_ram_in), .go(go_master_control_in), .plot(writeEn), .vga_color(w_vgaPath_color_in), .vga_x(w_vgaPath_x_in), .vga_y(w_vgaPath_y_in), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in), .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset),
+     .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace), .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
+     
+     // Wiring for vga data path 
+     displayOut vgaPath (.clock(CLOCK_50), .reset_n(1'b1), .x(w_vgaPath_x_in), .y(w_vgaPath_y_in), .load(w_load_vga), .color(w_vgaPath_color_in), .x_out(x), .y_out(y), .color_out(colour));
      
      // wiring for player control module
      controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut), .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse), .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out), .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in), .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
@@ -300,7 +311,7 @@ Inputs: clock, reset_n, x, y, collision_grace_over_pulse, n_car1, n_car2, n_car3
         color, playerX, playerY, playerColor, lives, score, go
 
 Outputs: plot, cga_color, vga_x, vga_y, memReset, load_num_cars, load_lives,
-         load_score, reset_score, init_cars_data, init_player_data, 
+         load_vga, load_score, reset_score, init_cars_data, init_player_data, 
          collision_grace_counter_reset_n, collision_grace_counter_resetn_pulse1,
          objects_reset, start_game, start_reset_processing, n_car1_out, n_car2_out,
          n_car3_out, lives_out, score_out
@@ -322,7 +333,7 @@ Score will not be reset till next game starts to allow
 the player to view the score after the game ends. 
 
 **/
-module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
+module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives, load_vga,
  load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
  playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset,
  start_reset_processing, objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n,
@@ -354,7 +365,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
     reg [2:0] checkColor;
 
     // loading codes to memory
-    output reg load_num_cars, load_lives, load_score, reset_score, init_cars_data, init_player_data;
+    output reg load_num_cars, load_lives, load_score, reset_score, init_cars_data, init_player_data, load_vga;
 
     // code n-edge triggered reset control to game objects
     output reg objects_reset;    
@@ -544,6 +555,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
       load_num_cars = 1'b0;
       load_lives = 1'b0;
       load_score = 1'b0;
+      load_vga = 1'b0;
       reset_score = 1'b0;
       init_cars_data = 1'b0;
       init_player_data = 1'b0;
@@ -631,6 +643,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                             vga_y[k] = curr_y[car_index2*8 + k];
                                          end
                                          vga_color = 3'b000;
+                                         load_vga = 1'b1;
                                     end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE1: begin
                                             
@@ -643,6 +656,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                              vga_x = curr_playerX;
                                              vga_y = curr_playerY;
                                              vga_color = 3'b000;
+                                             load_vga = 1'b1;
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_END: begin
                                           // Initializes car index for updating cars on the screen
@@ -668,6 +682,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                      begin
                                           vga_color[j] = color[car_index*3 + j]; 
                                      end
+                                     load_vga = 1'b1;
                                   end
           S_UPDATE_GRAPHICS_CARS_CYCLE1: begin
                                            
@@ -686,6 +701,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                        vga_x = curr_playerX;
                                        vga_y = curr_playerY;
                                        vga_color = playerColor;
+                                       load_vga = 1'b1;
                                     end
           S_UPDATE_GRAPHICS_PLAYER_CYCLE1: begin
                                               // Updates the score
@@ -725,7 +741,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                  end
            S_COLLISION_DETECTION_CYCLE2: begin
                                             
-                                            // turns reset off for collision grace counter
+                                            
                                             // ends game if lives reaches 0
                                             
                                             if(lives == 4'b0000)
@@ -767,6 +783,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
                                   vga_y = 0;
                                   vga_color = 3'b000;
                               end
+                              load_vga = 1'b1;
                            end
          
          S_CLEAR_SCREEN_CYCLE1: begin
@@ -811,6 +828,60 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_lives,
  
 endmodule
 
+/**
+Inputs: clock, reset_n, x, y, load, color
+
+Outputs: x_out, y_out, color_out
+
+This module creates a data path for processing outputs
+to the vga module. New vga outputs are loaded on the
+next positive edge of the clock if load is enabled.
+This module is driven by CLOCK_50 and has an active-low
+reset feature.
+**/
+module displayOut(clock, reset_n, x, y, load, color, x_out, y_out, color_out);
+   
+   // display outputs to be loaded
+   input [7:0] x;
+   input [7:0] y;
+   input [2:0] color;
+   
+   // load parameter
+   input load;
+   
+   // clock and active-low reset inputs
+   input clock, reset_n;
+
+   output reg [7:0] x_out;
+   output reg [7:0] y_out;
+   output reg [2:0] color_out;
+
+   // initializes outputs to vga module
+   initial
+   begin
+      x_out = 0;
+      y_out = 0;
+      color_out = 0;
+   end
+   
+   // Processes loading or reset during the positive edge of the clock
+   always @(posedge clock)
+   begin
+      if(!reset_n)
+      begin
+         x_out <= 0;
+         y_out <= 0;
+         color_out <= 0;
+      end
+      else if(load)
+      begin
+         x_out <= x;
+         y_out <= y;
+         color_out <= color;
+      end
+   end
+
+endmodule
 /**
 Inputs: x, y, color, start_game, up, down, left, right
 
