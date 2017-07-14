@@ -1585,6 +1585,10 @@ Given clk, rst_n, this module
 outputs a 90 bit random number per
 cycle of clk(on positive edge). rst_n
 is a synchronous active low reset. 
+The idea for this random number
+generator module was inspired by
+the following post on StackOverflow:
+https://stackoverflow.com/questions/14497877/how-to-implement-a-pseudo-hardware-random-number-generator
 **/
 module fibonacci_lfsr_90bit(
   input clk,
