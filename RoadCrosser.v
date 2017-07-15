@@ -388,6 +388,16 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
 
     // controls start of the game
     output reg start_game;
+    
+    // temp variable storing game statuses and their load enable values
+    reg t_start_game;
+    reg load_start_game_status;
+
+    reg t_start_reset_processing;
+    reg load_start_reset_processing_status;
+
+    reg t_observed_changes;
+    reg load_observed_changes_status;
 
     // controls start of reset processing
     output reg start_reset_processing;
@@ -542,7 +552,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
        l = 0;
        m = 0;
        o = 0;
-    end          
+    end       
                
     always @(*)
     begin: state_table
@@ -615,7 +625,19 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
       objects_reset = 1'b1;
       collision_grace_counter_resetn_pulse1 = 1'b1;
       collision_grace_counter_reset_n = 1'b1;
-          
+      
+      // Set default values for temp game status registers and their load enable values
+      t_start_game = 1'b0;
+      load_start_game_status = 1'b0;
+      t_start_reset_processing = 1'b0;
+      load_start_reset_processing_status = 1'b0;
+      t_observed_changes = 1'b0;
+      load_observed_changes_status = 1'b0;
+
+      vga_x = 8'b0000_0000;
+      vga_y = 8'b0000_0000;
+      vga_color = 3'b000;
+
       // Temp Data registers default values
       checkX = 8'b0000_0000;
       checkY = 8'b0000_0000;
@@ -644,72 +666,49 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                              // loads life input which is between 1 and 15 decimal in base 2
                              lives_out = (SW_in[3:0] == 0) ? 4'b0001 : SW_in[3:0];
                              load_lives = 1'b1;
-
-                             start_game = 1'b0;
-                             observed_changes = 1'b0;
-                             start_reset_processing = 1'b0;
                           end
            S_LIVES_INPUT_WAIT: begin
-                                  start_game = 1'b0;
-                                  observed_changes = 1'b0;
-                                  start_reset_processing = 1'b0;
+                                  
                                end
            S_N_CARS1_INPUT: begin
                                n_car1_out = SW_in[3:0];
                                load_num_cars1 = 1'b1;
-                               start_game = 1'b0;
-                               observed_changes = 1'b0;
-                               start_reset_processing = 1'b0;
+                               
                             end
            S_N_CARS1_INPUT_WAIT: begin
-                                    start_game = 1'b0;
-                                    observed_changes = 1'b0;
-                                    start_reset_processing = 1'b0;
+                                    
                                  end
            S_N_CARS2_INPUT: begin
                                n_car2_out = SW_in[3:0];
                                load_num_cars2 = 1'b1;
 
-                               start_game = 1'b0;
-                               observed_changes = 1'b0;
-                               start_reset_processing = 1'b0;
+                               
                             end 
            S_N_CARS2_INPUT_WAIT: begin
-                                    start_game = 1'b0;
-                                    observed_changes = 1'b0;
-                                    start_reset_processing = 1'b0;
+                                    
                                  end
            S_N_CARS3_INPUT: begin
                                n_car3_out = SW_in[3:0];
                                load_num_cars3 = 1'b1;
 
-                               start_game = 1'b0;
-                               observed_changes = 1'b0;
-                               start_reset_processing = 1'b0;
+                               
                             end
            S_N_CARS3_INPUT_WAIT: begin
-                                    start_game = 1'b0;
-                                    observed_changes = 1'b0;
-                                    start_reset_processing = 1'b0;
+                                    
                                  end
            S_INIT_DATA: begin
                            reset_score = 1'b1;
                            init_cars_data =1'b1;
                            init_player_data = 1'b1;
 
-                           start_game = 1'b0;
-                           observed_changes = 1'b0;
-                           start_reset_processing = 1'b0;
+                           
                         end
            S_INIT_DATA_WAIT: begin
-                                start_game = 1'b0;
-                                observed_changes = 1'b0;	
-                                start_reset_processing = 1'b0;								  
+                                							  
                              end
            S_INIT_DATA_WAIT2: begin
-                                 start_game = 1'b1;
-                                 observed_changes = 1'b0;
-                                 start_reset_processing = 1'b0;
+                                 t_start_game = 1'b1;
+                                 load_start_game_status = 1'b1;
 
                                  // Sets current object positions to initial positions
                                  t_curr_x = x;
@@ -721,36 +720,27 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                                  
                               end
            S_OBSERVE_INIT : begin
-                               observed_changes = 1'b0;
-                               start_game = 1'b1;
-                               start_reset_processing = 1'b0;
+                               
                             end
            S_OBSERVE_CHANGES: begin
 
                                  // sets observed_changes to 1 iff changes in the coordinates or colors are observed
                                  if(curr_x != x || curr_y != y || curr_playerX != playerX || curr_playerY != playerY)
                                  begin
-                                    observed_changes = 1'b1;
+                                    t_observed_changes = 1'b1;
+                                    load_observed_changes_status = 1'b1;
                                  end
-                                 else
-                                 begin
-                                    observed_changes = 1'b0;
-                                 end
+                                 
 
-                                 start_game = 1'b1;
-                                 start_reset_processing = 1'b0;
+                                
                               end
 
            S_MAKE_DECISION_BASED_ON_OBSERVATIONS : begin
-                                                      start_game = 1'b1;
-                                                      observed_changes = (observed_changes) ? 1'b1: 1'b0;
-                                                      start_reset_processing = 1'b0;
+                                                      
                                                    end
            S_UPDATE_GRAPHICS: begin
-                                 // car_index = 0;
-                                 start_game = 1'b1;
-                                 observed_changes = 1'b0;
-                                 start_reset_processing = 1'b0;
+                                 t_observed_changes = 1'b0;
+                                 load_observed_changes_status = 1'b1;
                               end
            S_UPDATE_GRAPHICS_CLEAR: begin
 
@@ -763,26 +753,16 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                                          vga_color = 3'b000;
                                          load_vga = 1'b1;
 
-                                         start_game = 1'b1;
-                                         observed_changes = 1'b0;
-                                         start_reset_processing = 1'b0;
                                     end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE1: begin
-                                             start_game = 1'b1;
-                                             observed_changes = 1'b0;
-                                             start_reset_processing = 1'b0;
+ 
                                              // car_index = car_index + 1;
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_CYCLE2: begin
-                                             start_game = 1'b1;
-                                             observed_changes = 1'b0;
-                                             start_reset_processing = 1'b0;
+ 
                                           end
           S_UPDATE_GRAPHICS_CLEAR_CARS_END: begin
-                                               // car_index = 0;
-                                               start_game = 1'b1;
-                                               observed_changes = 1'b0;
-                                               start_reset_processing = 1'b0;
+
                                             end   
           S_UPDATE_GRAPHICS_CLEAR_PLAYER: begin
                                              vga_x = curr_playerX;
@@ -790,27 +770,19 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                                              vga_color = 3'b000;
                                              load_vga = 1'b1;
   
-                                             start_game = 1'b1;
-                                             observed_changes = 1'b0;
-                                             start_reset_processing = 1'b0;
+
                                           end  
           S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1: begin
-                                                    start_game = 1'b1;
-                                                    observed_changes = 1'b0;
-                                                    start_reset_processing = 1'b0;
+
                                                  end
           S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2: begin
-                                                    start_game = 1'b1;
-                                                    observed_changes = 1'b0;
-                                                    start_reset_processing = 1'b0;
+ 
                                                  end
           S_UPDATE_GRAPHICS_CLEAR_END: begin
                                           // Initializes car index for updating cars on the screen
                                           // car_index = 0;
 
-                                          start_game = 1'b1;
-                                          observed_changes = 1'b0;
-                                          start_reset_processing = 1'b0;
+
                                        end
           S_UPDATE_GRAPHICS_CARS: begin
                                      
@@ -836,32 +808,22 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                                      load_currCarData = 1'b1;
                                      load_vga = 1'b1;
 
-                                     start_game = 1'b1;
-                                     observed_changes = 1'b0;
-                                     start_reset_processing = 1'b0;
+
                                   end
           S_UPDATE_GRAPHICS_CARS_CYCLE1: begin
-                                            start_game = 1'b1;
-                                            observed_changes = 1'b0;
-                                            start_reset_processing = 1'b0;
+
                                          end
 
           S_UPDATE_GRAPHICS_CARS_CYCLE2: begin
-                                              start_game = 1'b1;
-                                              observed_changes = 1'b0;
-                                              start_reset_processing = 1'b0;
+
                                               // car_index = car_index + 1;
                                          end
           S_UPDATE_GRAPHICS_CARS_CYCLE3: begin
-                                            start_game = 1'b1;
-                                            observed_changes = 1'b0;
-                                            start_reset_processing = 1'b0;
+
                                          end
           S_UPDATE_GRAPHICS_CARS_END: begin
                                          // car_index = 0;
-                                         start_game = 1'b1;
-                                         observed_changes = 1'b0;
-                                         start_reset_processing = 1'b0;
+
                                       end
           S_UPDATE_GRAPHICS_PLAYER: begin
 
@@ -871,26 +833,19 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                                        t_curr_playerY = playerY;
                                        
                                        // outputs current player data to vga module for display
-                                       vga_x = t_curr_playerX;
-                                       vga_y = t_curr_playerY;
+                                       vga_x = playerX;
+                                       vga_y = playerY;
                                        vga_color = playerColor;
                                        
                                        // loads vga output and currPlayer data
                                        load_vga = 1'b1;
                                        load_currPlayer = 1'b1;
 
-                                       start_game = 1'b1;
-                                       observed_changes = 1'b0;
-                                       start_reset_processing = 1'b0;
                                     end
           S_UPDATE_GRAPHICS_PLAYER_CYCLE1: begin
                                               // Updates the score
                                               score_out = `MAX_Y - curr_playerY;
                                               load_score = 1'b1;
-
-                                              start_game = 1'b1;
-                                              observed_changes = 1'b0;
-                                              start_reset_processing = 1'b0;
                                            end
           S_COLLISION_DETECTION: begin
                                     for (l = 0; l<=44; l=l+1)
@@ -924,83 +879,55 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                                        end
                                     end
 
-                                    start_game = 1'b1;
-                                    observed_changes = 1'b0;
-                                    start_reset_processing = 1'b0;
+
                                  end
            S_COLLISION_DETECTION_CYCLE1: begin
-                                            start_game = 1'b1;
-                                            observed_changes = 1'b0;
-                                            start_reset_processing = 1'b0;
+ 
                                          end
            S_COLLISION_DETECTION_CYCLE2: begin
                                             
                                             // ends game iff lives reaches 0
                                             if(lives == 4'b0000)
                                             begin
-                                               start_game = 1'b0;
+                                               t_start_game = 1'b0;
+                                               load_start_game_status = 1'b1;
                                             end
-                                            else
-                                            begin
-                                               start_game = 1'b1;
-                                            end
-                                            observed_changes = 1'b0;
-                                            start_reset_processing = 1'b0;
+
+
                                          end
            S_COLLISION_DETECTION_END: begin
-                                         if(!start_game)
-                                         begin
-                                            start_game = 1'b0;
-                                         end
-                                         else
-                                         begin
-                                            start_game = 1'b1;
-                                         end
-                                         observed_changes = 1'b0;
-                                         start_reset_processing = 1'b0;
+
                                       end
            S_WIN_DETECTION: begin
                                
                                // ends game if player has reached top of the screen
                                if(curr_playerY == 0)
                                begin
-                                  start_game = 1'b0;
+                                  t_start_game = 1'b0;
+                                  load_start_game_status = 1'b1;
                                end
-                               else
-                               begin
-                                  start_game = 1'b1;
-                               end
-                               observed_changes = 1'b0;
-                               start_reset_processing = 1'b0;
+ 
                             end
            S_WIN_DETECTION_END: begin
-                                   if(!start_game)
-                                   begin
-                                       start_game = 1'b0;
-                                   end
-                                   else
-                                   begin
-                                       start_game = 1'b1;
-                                   end
-                                   observed_changes = 1'b0;
-                                   start_reset_processing = 1'b0;
+
                                 end
            S_RESET1: begin
 
                         // counter = 0;
-                        start_game = 1'b0;
-                        start_reset_processing = 1'b1;
-                        observed_changes = 1'b0;
-                        objects_reset = 1'b0;
-                        collision_grace_counter_resetn_pulse1 = 1'b0;
-                        collision_grace_counter_reset_n = 1'b1;
-                        
-                        
+                        t_start_game = 1'b0;
+                        load_start_game_status = 1'b1;
+
+                        t_start_reset_processing = 1'b1;
+                        load_start_reset_processing_status = 1'b1;
+
+                        t_observed_changes = 1'b0;
+                        load_observed_changes_status = 1'b1;
+
                      end
            S_RESET1_CYCLE1: begin
-                               start_game = 1'b0;
-                               observed_changes = 1'b0;
-                               start_reset_processing = 1'b1;
+                               objects_reset = 1'b0;
+                               collision_grace_counter_resetn_pulse1 = 1'b0;
+                               collision_grace_counter_reset_n = 1'b1;
                             end
            S_CLEAR_SCREEN: begin
 
@@ -1020,30 +947,30 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
                               end
                               load_vga = 1'b1;
 
-                              start_game = 1'b0;
-                              observed_changes = 1'b0;
-                              start_reset_processing = 1'b1;
+
                            end
          
          S_CLEAR_SCREEN_CYCLE1: begin
-                                   start_game = 1'b0;
-                                   observed_changes = 1'b0;
-                                   start_reset_processing = 1'b1;
+
                                    // counter = counter + 1;
                                 end
          S_CLEAR_SCREEN_CYCLE2: begin
-                                   start_game = 1'b0;
-                                   observed_changes = 1'b0;
-                                   start_reset_processing = 1'b1;
+ 
                                 end
          S_CLEAR_SCREEN_END: begin
                                 // counter = 0;
                                 collision_grace_counter_resetn_pulse1 = 1'b1;
                                 memReset = 1'b0;
-                                start_reset_processing = 1'b0;
 
-                                start_game = 1'b0;
-                                observed_changes = 1'b0;
+                                t_start_reset_processing = 1'b0;
+                                load_start_reset_processing_status = 1'b1;
+
+                                t_start_game = 1'b0;
+                                load_start_game_status = 1'b1;
+                                
+                                t_observed_changes = 1'b0;
+                                load_observed_changes_status = 1'b1;
+                                
                              end
          
       endcase
@@ -1106,6 +1033,22 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
            curr_x <= t_curr_x;
            curr_y <= t_curr_y;
         end
+         
+        if(load_start_game_status)
+        begin
+           start_game <= t_start_game;
+        end
+        
+        if(load_start_reset_processing_status)
+        begin
+           start_reset_processing <= t_start_reset_processing;
+        end
+        
+        if(load_observed_changes_status)
+        begin
+           observed_changes <= t_observed_changes;
+        end
+
 
    end // state_FFS
                 
@@ -1553,6 +1496,34 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
 
      always @(*)
      begin
+
+        // Sets default values for each register
+        t_x = {360{1'b0}};
+        t_y = {360{1'b0}};
+        t_color = {135{1'b0}};
+        t_playerX = 8'b0000_0000;
+        t_playerY = 8'b0000_0000;
+        t_playerColor = 3'b000;
+   	t_lives = 4'b0001;
+        t_n_car1_out = 4'b0000;
+        t_n_car2_out = 4'b0000;
+        t_n_car3_out = 4'b0000;
+        t_score = 8'b0000_0000;
+        t_car1_x = 8'b0000_0000;
+        t_car1_y = {120{1'b0}};
+        t_car2_x = 8'b0000_0000;
+        t_car2_y = {120{1'b0}};
+        t_car3_x = 8'b0000_0000;
+        t_car3_y = {120{1'b0}};
+        t_car1_color = {45{1'b0}};
+        t_car2_color = {45{1'b0}};
+        t_car3_color = {45{1'b0}};
+        tempX = 8'b0000_0000;
+        tempY = 8'b0000_0000;
+        tempColor = 3'b000;
+        i = 0;
+        j = 0;
+
         if(!reset_n)
         begin
             
@@ -1583,34 +1554,6 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         end
         else
         begin
-            
-            // Sets default values for each register
-            t_x = {360{1'b0}};
-            t_y = {360{1'b0}};
-            t_color = {135{1'b0}};
-            t_playerX = 8'b0000_0000;
-            t_playerY = 8'b0000_0000;
-            t_playerColor = 3'b000;
-   	    t_lives = 4'b0001;
-            t_n_car1_out = 4'b0000;
-            t_n_car2_out = 4'b0000;
-            t_n_car3_out = 4'b0000;
-            t_score = 8'b0000_0000;
-            t_car1_x = 8'b0000_0000;
-            t_car1_y = {120{1'b0}};
-            t_car2_x = 8'b0000_0000;
-            t_car2_y = {120{1'b0}};
-            t_car3_x = 8'b0000_0000;
-            t_car3_y = {120{1'b0}};
-            t_car1_color = {45{1'b0}};
-            t_car2_color = {45{1'b0}};
-            t_car3_color = {45{1'b0}};
-            tempX = 8'b0000_0000;
-            tempY = 8'b0000_0000;
-            tempColor = 3'b000;
-            i = 0;
-            j = 0;
-
                // Simultaneous updates are allowed
                if(load_car1)
                begin
