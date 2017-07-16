@@ -1043,7 +1043,6 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
              S_CLEAR_SCREEN_END: counter <= 0;
         endcase
 
-        
         // Updates current player positions registers if load is enabled or during reset
         if(load_currPlayer || current_state == S_RESET1_CYCLE1)
         begin
