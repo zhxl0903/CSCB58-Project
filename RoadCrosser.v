@@ -1,4 +1,52 @@
-
+/**
+* RoadCrosser 2037
+*
+* Created by: 
+* 
+* First Name: Xiao Lei
+* Last Name: Zhang
+* Student Number: 998923820
+* UofT E-mail Address: excel.zhang@mail.utoronto.ca
+*
+* First Name: Won Tae
+* Last Name: Jung
+* Student Number: 1002433208
+* UofT E-mail Address: won.jung@mail.utoronto.ca
+*
+* First Name: Joseph
+* Last Name: Dong
+* Student Number: 100 334 9272
+* UofT E-mail Address: joseph.dong@mail.utoronto.ca
+* 
+* Roadcrosser 2037 is a 2D pixel based action game
+* implemented using Verilog. The player is controlled
+* using KEY[3:0]. KEY[3] is up. KEY[2] is down. KEY[1]
+* is left. KEY[0] is right. SW[9] is an active low game 
+* reset. Before the game starts, the player is allowed to 
+* set the number of lives between 1 and 15 (Setting life to 0 will
+* set life to 1 instead.). This is followed by the number
+* of cars of type 1, type 2, and type 3 respectively. 
+* Type 1 cars are the fastest moving cars and type 3 cars
+* are the slowest moving cars. The number of cars of each 
+* type can be set between 0 and 15. The numbers are set
+* using SW[3:0]. After each setting, the player needs
+* to press and release KEY[0] to proceed to setting the
+* next number. The game starts after setting lives, number
+* of cars of type 1, number of cars of type 2, and number
+* of cars of type 3. During the game, the goal of the player
+* is to move to the top of the screen while maintaining 
+* positive life points. Each collision with a car will
+* decrease the player's life by 1. The game ends either
+* when the player reaches the top of the screen or loses
+* all life points. The number of lives of the player
+* is displayed on HEX2. The score of the player is displayed
+* on HEX0 and HEX1. The score is based on the current
+* distance of the player away from the bottom of the screen.
+* This distance is between 0 and 119. Once the game ends,
+* the player is allowed to start a new game by setting the
+* game settings mentioned above again. The score from the
+* previous game is not cleared until the next game begins.
+**/
 
 /**
    Global Constant Declarations
@@ -57,11 +105,10 @@ module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
 
-		// Your inputs and outputs here
         	KEY,
         	SW,
 
-		// The ports below are for the VGA output.  Do not change.
+		// The ports below are for the VGA output.
 		VGA_CLK,   						//	VGA Clock
 		VGA_HS,							//	VGA H_SYNC
 		VGA_VS,							//	VGA V_SYNC
@@ -73,40 +120,37 @@ module RoadCrosser
  		HEX0, HEX1, HEX2				
 	);
 
-	input			CLOCK_50;				//	50 MHz
+	input   CLOCK_50;				                //	50 MHz
 	input   [9:0]   SW;
 	input   [3:0]   KEY;
 
-        output [6:0] HEX0;  // score
-        output [6:0] HEX1;  // score
-        output [6:0] HEX2;  // lives
+        output [6:0] HEX0;                                              //      score digit 1
+        output [6:0] HEX1;                                              //      score digit 2
+        output [6:0] HEX2;                                              //      number of lives
 
-	// Declare your inputs and outputs here
-	// Do not change the following outputs
 	output			VGA_CLK;   				//	VGA Clock
 	output			VGA_HS;					//	VGA H_SYNC
 	output			VGA_VS;					//	VGA V_SYNC
 	output			VGA_BLANK_N;				//	VGA BLANK
 	output			VGA_SYNC_N;				//	VGA SYNC
-	output	[9:0]	VGA_R;   				//	VGA Red[9:0]
-	output	[9:0]	VGA_G;	 				//	VGA Green[9:0]
-	output	[9:0]	VGA_B;   				//	VGA Blue[9:0]
+	output	[9:0]	VGA_R;   				        //	VGA Red[9:0]
+	output	[9:0]	VGA_G;	 				        //	VGA Green[9:0]
+	output	[9:0]	VGA_B;   				        //	VGA Blue[9:0]
 	
 	wire resetn;
 	assign resetn = SW[9];
         
-	
-	// Create the colour, x, y and writeEn wires that are vga inputs from controller output.
+	// declares the colour, x, y and writeEn wires that are vga inputs from controller output.
 	wire [2:0] colour;
 	wire [7:0] x;
 	wire [7:0] y;
 	wire writeEn;
         
-        // Output of startGame value
+        // Output of startGame value from master control
         wire startGameOut;
 
-	// Create an Instance of a VGA controller - there can be only one!
-	// Define the number of colours as well as the initial background
+	// Creates an Instance of a VGA controller - there can be only one!
+	// Defines the number of colours as well as the initial background
 	// image file (.MIF) for the controller.
 	/**vga_adapter VGA(
 			.resetn(resetn),
@@ -129,85 +173,85 @@ module RoadCrosser
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
 		defparam VGA.BACKGROUND_IMAGE = "black.mif";**/
     
-     // load parameters from master control to RAM
+     // declares load parameters from master control to RAM
      wire w_load_num_cars;
      wire w_load_num_cars1;
      wire w_load_num_cars2;
      wire w_load_num_cars3;
      wire w_load_lives, w_load_score, w_init_cars_data, w_init_player_data;
 
-     // resets score in memory (1 => reset)
+     // decalres wire for score reset in memory (1'b1 => reset)
      wire w_reset_score; 
 
-     // wires for load objects parameters from RAM to the corresponding object controls
+     // decalres wires for load objects parameters from RAM to the corresponding object controls
      wire w_load_car1, w_load_car2, w_load_car3, w_load_player;
 
-     // wires for score output from RAM (digits: LSB at 0; MSB at 7)
+     // declares wires for score output from RAM (digits: LSB at 0; MSB at 7)
      // score is based on Y coordinate
      wire [7:0] w_score; 
 
-     // wire for score input into RAM from master control
+     // declares wires for score input into RAM from master control
      wire [7:0] w_score_ram_in;
      
-     // wire for lives output from ram
+     // declares wires for lives output from ram
      wire [3:0] w_lives;
      
-     // wire for lives input into ram
+     // declares wires for lives input into ram
      wire [3:0] w_lives_ram_in;
      
-     // wire for number of cars output from ram
+     // declares wires for number of cars output from ram
      wire [3:0] w_n_car1_ram_out;
      wire [3:0] w_n_car2_ram_out;
      wire [3:0] w_n_car3_ram_out;
 
-     // wire for number of cars inputs into RAM from master control output
+     // declares wires for number of cars inputs into RAM from master control output
      wire [3:0] w_n_car1_ram_in;
      wire [3:0] w_n_car2_ram_in;
      wire [3:0] w_n_car3_ram_in;
 
-     // wires for output of car data from RAM to mater control
+     // declares wires for output of car data from RAM to mater control
      wire [359:0] w_x_ram_out;
      wire [359:0] w_y_ram_out;
      wire [134:0] w_color_ram_out;
      
-     // wire for reset signal input to ram from master control
+     // decalres wire for reset signal input to ram from master control
      wire w_mem_reset_in;
      
-     // wire for signal status for start reset processing from control master
+     // declares wire for signal status for start reset processing from control master
      wire w_start_reset_processing;
      
-     // wire to input SW into master control
-     // Resetn for master control is controlled by SW[9] separately without using this wire
+     // declares wires to input SW into master control
+     // resetn for master control is controlled by SW[9] separately without using this wire
      wire [9:0] SW_master_control_in;
      
-     // wire to input the go singnal into master control
+     // declares wire to input the go singnal into master control
      wire go_master_control_in;
      
-     // enables go and SW inputs  iff game is not resetting or running the level
+     // enables go and SW inputs iff game is not resetting or running the level
      assign go_master_control_in = (w_start_reset_processing || startGameOut) ? 1'b0 : ~KEY[0];
      assign SW_master_control_in = (w_start_reset_processing || startGameOut) ? 1'b0 : SW;
      
-     // Player data output from RAM
+     // declares wires player data outputsfrom RAM
      wire [7:0] w_player_x_ram_out;
      wire [7:0] w_player_y_ram_out;
      wire [2:0] w_player_color_ram_out;
      
-     // Player data input into RAM from cPlayer control
+     // declares wires for player data input into RAM from cPlayer control
      wire [7:0] w_player_x_ram_in;
      wire [7:0] w_player_y_ram_in;
      wire [2:0] w_player_color_ram_in;
      
-     // Car1 data output from RAM
+     // declares wires for Car1 data outputs from RAM
      wire [7:0] w_car1_x_ram_out;
      wire [119:0] w_car1_y_ram_out;
      wire [44:0] w_car1_color_ram_out;
      
-     // Car2 data output from RAM
+     // declares wires for Car2 data outputs from RAM
      wire [7:0] w_car2_x_ram_out;
      wire [119:0] w_car2_y_ram_out;
      wire [44:0] w_car2_color_ram_out;
 
-     // Car3 data output from RAM
+     // declares wires for Car3 data outputs from RAM
      wire [7:0] w_car3_x_ram_out;
      wire [119:0] w_car3_y_ram_out;
      wire [44:0] w_car3_color_ram_out;
@@ -225,50 +269,48 @@ module RoadCrosser
      assign w_car3_y_ram_out = w_y_ram_out[359:240];
      assign w_car3_color_ram_out = w_color_ram_out[134:90];
      
-
-     // Car1 data input into RAM
+     // declares wires for Car1 data inputs into RAM
      wire [7:0] w_car1_x_ram_in;
      wire [119:0] w_car1_y_ram_in;
      wire [44:0] w_car1_color_ram_in;
     
-     // Car2 data input into RAM
+     // declares wires for Car2 data input into RAM
      wire [7:0] w_car2_x_ram_in;
      wire [119:0] w_car2_y_ram_in;
      wire [44:0] w_car2_color_ram_in;
 
-     // Car3 data input into RAM
+     // declares wires for Car3 data input into RAM
      wire [7:0] w_car3_x_ram_in;
      wire [119:0] w_car3_y_ram_in;
      wire [44:0] w_car3_color_ram_in;
      
-     // wire from divider reset/enable to corresponding cars/player divider reset/enable
+     // declares wires from divider reset/enable to corresponding cars/player divider reset/enable
      wire car1D_reset, car2D_reset, car3D_reset;
      wire car1D_enable, car2D_enable, car3D_enable;     
      wire playerD_enable, playerD_reset;
       
-     // wire from divider pulse to cars/player control pulse input
+     // declares wires from divider pulse to cars/player control pulse input
      wire car1D_pulse, car2D_pulse, car3D_pulse, playerD_pulse;
 
-     // object reset wire from master control to other controls (active low reset)
+     // declares object reset wire from master control to other controls (active low reset)
      wire w_objects_reset;
 
-     // wires connecting collision grace counter module and cMaster (resets are active low)
+     // declares wires connecting collision grace counter module and cMaster (resets are active low)
      wire w_reset_cgrace_pulse1, w_reset_cgrace, w_cgrace_over_pulse;
 
-     // wire connecting 90 bit random number generator to memory module
+     // declares wires connecting 90 bit random number generator to memory module
      wire [89:0] rand_to_mem; 
    
-     // wire for cMaster to VGApath for loading vga values
+     // declares wires from cMaster to VGApath for loading vga values
      wire w_load_vga;
      
-     // Data inputs into VGApath from cMaster
+     // declares wires for data inputs into VGApath from cMaster
      wire [7:0] w_vgaPath_x_in;
      wire [7:0] w_vgaPath_y_in;
      wire [2:0] w_vgaPath_color_in;
     
      // Module instance declartions with wiring are listed below:     
- 
-     // wiring for master control module
+     // declares wiring and instance for master control module
      controlMaster cMaster (.clock(CLOCK_50), .reset_n(resetn), .start_game(startGameOut),
      .load_num_cars(w_load_num_cars), .load_num_cars1(w_load_num_cars1), .load_num_cars2(w_load_num_cars2),
      .load_num_cars3(w_load_num_cars3), .load_lives(w_load_lives), .load_vga(w_load_vga),
@@ -284,18 +326,18 @@ module RoadCrosser
      .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace),
      .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
      
-     // wiring and instance for vga data buffer module
+     // declares wiring and instance for vga data buffer module
      displayOut vgaPath (.clock(CLOCK_50), .reset_n(1'b1), .x(w_vgaPath_x_in), .y(w_vgaPath_y_in),
      .load(w_load_vga), .color(w_vgaPath_color_in), .x_out(x), .y_out(y), .color_out(colour));
      
-     // wiring and instance for player control module
+     // declares wiring and instance for player control module
      controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut),
      .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse),
      .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out),
      .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in),
      .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
 
-     // wiring and instance for car control modules of different movement speeds
+     // declares wiring and instance for car control modules of different movement speeds
      controlCar cCar1 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut),
      .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse),
      .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .dir(1'b1),
@@ -313,7 +355,7 @@ module RoadCrosser
      .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .dir(1'b1), .n_cars(w_n_car3_ram_out),
      .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
      
-     // wiring and instance for memory module / datapath 
+     // declares wiring and instance for memory module / datapath 
      memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out),
      .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out),
      .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out),
@@ -329,14 +371,15 @@ module RoadCrosser
      .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data),
      .init_player_data(w_init_player_data), .rand_in(rand_to_mem));
      
-     // wiring and instance for score display on HEX0 and HEX1
+     // declares wiring and instance for score display on HEX0 and HEX1
      HEXDisplay score1 (.HEX(HEX0[6:0]), .c(w_score[3:0]));
      HEXDisplay score2 (.HEX(HEX1[6:0]), .c(w_score[7:4]));
 
-     // wiring and instance for number of lives display on HEX2
+     // declares wiring and instance for number of lives display on HEX2
      HEXDisplay livesHEX (.HEX(HEX2[6:0]), .c(w_lives));
      
-     // wiring and instance for rate dividers controlling different speeds of cars and the update rate of the player movements
+     // declares wiring and instance for rate dividers controlling different speeds of 
+     // cars and the update rate of the player movements
      RateDivider car1D (.clock(CLOCK_50), .reset_n(car1D_reset), .enable(car1D_enable),
      .period(`CAR1_CYCLES), .pulse(car1D_pulse));  
 
@@ -349,12 +392,12 @@ module RoadCrosser
      RateDivider playerD (.clock(CLOCK_50), .reset_n(playerD_reset), .enable(playerD_enable),
      .period(`PLAYER_CYCLES), .pulse(playerD_pulse));  
      
-     // wiring and instance for counter used in collision grace period in master control module
+     // declares wiring and instance for counter used in collision grace period in master control module
      counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace),
      .reset_n_pulse_1(w_reset_cgrace_pulse1) ,
      .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
      
-     // wiring and instance for 90 bit random generator module inspired by online sources
+     // declares wiring and instance for 90 bit random generator module inspired by online sources
      fibonacci_lfsr_90bit rand(.clk(CLOCK_50),  .rst_n(1'b1),  .data(rand_to_mem));
 endmodule
 
@@ -386,11 +429,13 @@ Score will not be reset till next game starts to allow
 the player to view the score after the game ends. 
 
 **/
-module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, load_num_cars2 , load_num_cars3, load_lives, load_vga,
- load_score, reset_score, init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out, n_car3_out, x, y, color,
- playerX, playerY, playerColor, score, lives, lives_out, score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset,
- start_reset_processing, objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n,
- collision_grace_counter_resetn_pulse1);
+module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1,
+load_num_cars2 , load_num_cars3, load_lives, load_vga, load_score, reset_score,
+init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out,
+n_car3_out, x, y, color, playerX, playerY, playerColor, score, lives, lives_out,
+score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing,
+objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n,
+collision_grace_counter_resetn_pulse1);
 
     input clock, reset_n;
     input [9:0] SW_in;    
@@ -416,8 +461,9 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
     reg [7:0] checkY;
     reg [2:0] checkColor;
 
-    // loading-codes to memory
-    output reg load_num_cars, load_lives, load_score, reset_score, init_cars_data, init_player_data, load_vga;
+    // declares loading-code outputs to memory
+    output reg load_num_cars, load_lives, load_score, reset_score,
+    init_cars_data, init_player_data, load_vga;
     output reg load_num_cars1, load_num_cars2 , load_num_cars3;
 
     // Updates current player data on the next posedge
@@ -431,13 +477,13 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
     // Updates all current cars data based on the value of t_curr_x and t_curr_y
     reg load_currCarsData;
 
-    // code n-edge triggered reset control to game objects
+    // declares negative-edge triggered reset control to game object controlpaths
     output reg objects_reset;    
 
     // controls start of the game
     output reg start_game;
     
-    // temp variable storing game statuses and their load enable values
+    // temp variable for storing game statuses and their load enable values
     reg t_start_game;
     reg load_start_game_status;
 
@@ -508,7 +554,7 @@ module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1, 
     output reg [3:0] lives_out;
     output reg [7:0] score_out;
     
-    // Go button during lives and number of cars selection states
+    // declares go button for setting lives and number of cars during selection states
     input go;
     
     // state registers
@@ -1833,9 +1879,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                   t_playerX = `PLAYER_SPAWN_X;
                   t_playerY = `PLAYER_SPAWN_Y;
                   t_playerColor =`PLAYER_COLOR;
-               end
-              
-                       
+               end  
         end
      end
 
