@@ -2251,4 +2251,4 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
              colorArray = 45'b111111111111000000111111111111000000111000000;
         end
    end
-endmodule
+endmodule 
