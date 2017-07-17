@@ -1986,8 +1986,8 @@ module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
    // initializes q and pulse value
    initial
    begin
-      q = 0;
-      pulse = 1;
+      q = {26{1'b0}};
+      pulse = 1'b1;
    end
    
    always @(posedge clock)
@@ -1996,17 +1996,16 @@ module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
       begin
          
          // resets q and sets pulse to 0
-         q <= 0;
-         pulse <= 0;
+         q <= {26{1'b0}};
+         pulse <= 1'b0;
       end
-      
       
       if(!reset_n_pulse_1)
       begin
 
          // resets q and sets pulse to 0
-         q <= 0;
-         pulse <= 1;
+         q <= {26{1'b0}};
+         pulse <= 1'b1;
       end
       
       if(reset_n && reset_n_pulse_1)
@@ -2016,11 +2015,11 @@ module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
          // sets pulse to 1 when q reaches limit
          if(q == limit)
          begin
-            pulse <= 1;
+            pulse <= 1'b1;
          end
          else
          begin
-            q <= q + 1;
+            q <= q + {{25{1'b0}},1'b1};
          end
       end
    end
