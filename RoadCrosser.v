@@ -845,7 +845,7 @@ collision_grace_counter_resetn_pulse1);
                               end
            S_UPDATE_GRAPHICS_CLEAR: begin
 
-                                         // prepares coord x,y, color for plot black clear pixel
+                                         // prepares coord x,y, color for plotting black clear pixel
                                          for (k=0; k<=7; k=k+1)
                                          begin
                                             vga_x[k] = curr_x[car_index2*8 + k];
@@ -1017,7 +1017,6 @@ collision_grace_counter_resetn_pulse1);
                                   t_start_game = 1'b0;
                                   load_start_game_status = 1'b1;
                                end
- 
                             end
            S_WIN_DETECTION_END: begin
 
@@ -1070,10 +1069,12 @@ collision_grace_counter_resetn_pulse1);
                               load_vga = 1'b1;
                            end
          S_CLEAR_SCREEN_CYCLE1: begin
+
                                    // counter = counter + 1; in this state
                                    // Add code here for future development
                                 end
          S_CLEAR_SCREEN_CYCLE2: begin
+
                                    // Add code here for future development
                                 end
          S_CLEAR_SCREEN_END: begin
@@ -2220,7 +2221,7 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
    always @(in or offsetX or offsetY)
    begin
 
-        // sets default values for the output registers
+        // sets default values for the output registers based on offsetX and offsetY
         xArray = {120{1'b0}} + {15{offsetX}};
         yArray = {120{1'b0}} + {15{offsetY}};
         colorArray = {45{1'b0}};
