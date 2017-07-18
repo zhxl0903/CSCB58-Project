@@ -828,7 +828,8 @@ collision_grace_counter_resetn_pulse1);
            S_OBSERVE_CHANGES: begin
 
                                  // sets observed_changes to 1 iff changes in the coordinates or colors are observed
-                                 if(curr_x != x || curr_y != y || curr_playerX != playerX || curr_playerY != playerY)
+                                 if(curr_x != x || curr_y != y || curr_playerX != playerX 
+                                 || curr_playerY != playerY)
                                  begin
                                     t_observed_changes = 1'b1;
                                     load_observed_changes_status = 1'b1;
@@ -979,7 +980,8 @@ collision_grace_counter_resetn_pulse1);
                                        // Allows collision damage iff collision occurs and car is not invisible(color black) 
                                        // and collision grace period is over
                                        // Car can be invisible depending on the number of cars set for the game by the player
-                                       if(checkX == curr_playerX && checkY == curr_playerY && checkColor!= 3'b000 && collision_grace_over_pulse)
+                                       if(checkX == curr_playerX && checkY == curr_playerY 
+                                         && checkColor!= 3'b000 && collision_grace_over_pulse)
                                        begin
                                              lives_out = lives - 4'b0001;
                                              load_lives = 1'b1;
@@ -1151,7 +1153,8 @@ collision_grace_counter_resetn_pulse1);
             curr_y[car_index*8+7] <= t_curr_car_y[7];
         end
         
-        // Updates position of all current cars if load is enabled or during reset
+        // Updates position of all current cars if load is enabled or
+        // during reset
         if(load_currCarsData || current_state == S_RESET1_CYCLE1)
         begin
            curr_x <= t_curr_x;
@@ -1178,8 +1181,10 @@ collision_grace_counter_resetn_pulse1);
    end 
    
    // enables VGA plot based on current_state of the fsm
-   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE2 || current_state == S_UPDATE_GRAPHICS_CARS_CYCLE2 
-   || current_state == S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2 || current_state == S_UPDATE_GRAPHICS_PLAYER_CYCLE1 
+   assign plot = (current_state == S_UPDATE_GRAPHICS_CLEAR_CYCLE2 
+   || current_state == S_UPDATE_GRAPHICS_CARS_CYCLE2 
+   || current_state == S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2 
+   || current_state == S_UPDATE_GRAPHICS_PLAYER_CYCLE1 
    || current_state == S_CLEAR_SCREEN_CYCLE1) ? 1'b1 : 1'b0;
 endmodule
 
@@ -1257,7 +1262,9 @@ This control unit updates the player's positions by writing
 to the memory module. Data about the player (x, y, and color) can
 also be read from the memory module.
 **/
-module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
+module controlPlayer(clock, reset_n, start_game, reset_divider,
+divider_enable, pulse_in, up, down, left, right, x, y, color, load_player,
+x_out, y_out, color_out); 
 
     // clock, active-low reset and divider pulse input signals
     input clock, reset_n,  pulse_in;
@@ -1397,7 +1404,8 @@ memory module to allow read/write of cars' data from/to memory.
 Direction of movement can be set using the input dir. The car moves
 right if and only if dir = 1'b1;
 **/
-module controlCar(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
+module controlCar(clock, reset_n, start_game, reset_divider, divider_enable,
+pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
 
     // clock, active-low reset, divider pulse input signals
     input clock, reset_n,  pulse_in;
