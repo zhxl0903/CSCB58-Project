@@ -1545,17 +1545,19 @@ by reset_n to allow the player to view the score after the game ends. Score can 
 reset by the operation reset_score. 8 bit binary numbers are taken from rand_in to initilize
 the three 8 bit x coordinates of the 3 car types when game starts.
 **/
-module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives, n_car1_out, n_car2_out, n_car3_out,
- n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in, car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in,
- car2_color_in, car3_color_in, player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2,
- load_car3, load_num_cars, load_num_cars1, load_num_cars2, load_num_cars3, load_player, load_lives, load_score, reset_score,
- init_cars_data, init_player_data, rand_in);
+module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives,
+n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in,
+car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in,
+player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2,
+load_car3, load_num_cars, load_num_cars1, load_num_cars2, load_num_cars3, load_player,
+load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
 
      // CLOCK_50 and active low reset inputs
      input clock, reset_n;
      
      // Operation signal inputs
-     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score,
+     input load_car1, load_car2, load_car3, load_num_cars,
+     load_player, load_lives, load_score,
      reset_score, init_cars_data, init_player_data;
      input load_num_cars1, load_num_cars2, load_num_cars3;
 
@@ -2043,7 +2045,7 @@ module RateDivider (clock, reset_n, enable, period, pulse);
 endmodule
 
 /**
-Input: clock, reset_n, limit, reset_n_pulse_1
+Inputs: clock, reset_n, limit, reset_n_pulse_1
 Output: pulse
 
 This module implements a counter
@@ -2148,8 +2150,8 @@ module HEXDisplay(HEX,c);
 endmodule 
 
 /**
-input: clk, rst_n 
-output: data
+Inputs: clk, rst_n 
+Output: data
 
 Given clk, rst_n, this module
 outputs a 90 bit random number per
@@ -2198,6 +2200,11 @@ module fibonacci_lfsr_90bit(
 endmodule
 
 /**
+ * Inputs:
+ * in is a 4 bit binary input that represents values 0 to F
+ * offsetX is an 8 bit offset input applied to each 8-bit x coordinate in the output xArray
+ * offsetY is an 8 bit offset input applied to each 8-bit y coordinate in the output yArray
+ *
  * Outputs: 
  * xArray is a 120 bit output that represents the x coordinates of a 3x5
  *        matrix of pixels, in row by row order, each coordinate is 8 bits
@@ -2205,11 +2212,6 @@ endmodule
  *        matrix of pixels, in row by row order, each coordinate is 8 bits
  * colorArray is a 45 bit output that represents the rgb values of a 3x5
  *        matrix of pixels, in row by row order, each pixel is 3 bits
- *
- * Inputs:
- * in is a 4 bit binary input that represents values 0 to F
- * offsetX is an 8 bit offset input applied to each 8-bit x coordinate in the output xArray
- * offsetY is an 8 bit offset input applied to each 8-bit y coordinate in the output yArray
  *
  * This module creates a decoder for displaying HEX digits on the screen.
  * in is connected to the scores output from the memory module. offsetX
