@@ -329,11 +329,11 @@ module RoadCrosser
      // Declares score data output from HEX VGA decoders to master control path
      wire [119:0] w_HEX0_X;
      wire [119:0] w_HEX0_Y;
-     wire [44:0] w_HEX0_COLOR;
+     wire [0:44] w_HEX0_COLOR;
      
      wire [119:0] w_HEX1_X;
      wire [119:0] w_HEX1_Y;
-     wire [44:0] w_HEX1_COLOR;
+     wire [0:44] w_HEX1_COLOR;
     
      // Module instance declartions with wiring are listed below:     
      // declares wiring and instance for master control module
@@ -589,11 +589,11 @@ HEX1_Y, HEX1_COLOR);
     // decalres inputs from HEX Display panel decoders
     input [119:0] HEX0_X;
     input [119:0] HEX0_Y;
-    input [44:0] HEX0_COLOR;
+    input [0:44] HEX0_COLOR;
 
     input [119:0] HEX1_X;
     input [119:0] HEX1_Y;
-    input [44:0] HEX1_COLOR;
+    input [0:44] HEX1_COLOR;
     
     // Go button during lives and number of cars selection states
     input go;
@@ -2464,14 +2464,14 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
    input [7:0] offsetY;
    output reg [119:0] xArray;
    output reg [119:0] yArray;
-   output reg [44:0] colorArray;
+   output reg [0:44] colorArray;
    
    always @(in or offsetX or offsetY)
    begin
 
         // sets default values for the output registers based on offsetX and offsetY
-        xArray = {120{1'b0}} + {15{offsetX}};
-        yArray = {120{1'b0}} + {15{offsetY}};
+        xArray = {120{1'b0}};
+        yArray = {120{1'b0}};
         colorArray = {45{1'b0}};
         
         // Outputs new coordinate and color arrays based on in
@@ -2571,5 +2571,8 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
              yArray = 120'b00000100_00000100_00000100_00000011_00000011_00000011_00000010_00000010_00000010_00000001_00000001_00000001_00000000_00000000_00000000;
              colorArray = 45'b111111111111000000111111111111000000111000000;
         end
+
+        xArray = xArray + {15{offsetX}};
+        yArray = yArray + {15{offsetY}};
    end
 endmodule 
