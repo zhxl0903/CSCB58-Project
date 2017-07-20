@@ -1214,13 +1214,14 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
                                         end
           S_UPDATE_GRAPHICS_HEX_SCORE_D0: begin
                                              
-                                             // updates first digit of score on screen pixel by pixel
+                                             // updates one pixel of the first digit of score 
                                              for(r = 0; r <= 7; r = r + 1)
                                              begin
                                                   vga_x[r] = HEX0_X[8 * HEXD0_INDEX + r];
                                                   vga_y[r] = HEX0_Y[8 * HEXD0_INDEX + r];
                                              end
-                                                     
+                                             
+                                             // outputs new color to VGA buffer module 
                                              vga_color[0] = HEX0_COLOR[3 * HEXD0_INDEX];
                                              vga_color[1] = HEX0_COLOR[3 * HEXD0_INDEX + 1];
                                              vga_color[2] = HEX0_COLOR[3 * HEXD0_INDEX + 2];
@@ -1244,14 +1245,14 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
                                               end
           S_UPDATE_GRAPHICS_HEX_SCORE_D1: begin
                                              
-                                             // updates second digit of the score on screen pixel
-                                             // by pixel
+                                             // updates one pixel of the second digit of the score
                                              for(s = 0; s <= 7; s = s + 1)
                                              begin
                                                   vga_x[s] = HEX1_X[8 * HEXD1_INDEX + s];
                                                   vga_y[s] = HEX1_Y[8 * HEXD1_INDEX + s];
                                              end
-                                                     
+                                             
+                                             // outputs new color to VGA buffer module    
                                              vga_color[0] = HEX1_COLOR[3 * HEXD1_INDEX];
                                              vga_color[1] = HEX1_COLOR[3 * HEXD1_INDEX + 1];
                                              vga_color[2] = HEX1_COLOR[3 * HEXD1_INDEX + 2];
@@ -1275,14 +1276,14 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
                                               end
           S_UPDATE_GRAPHICS_HEX_LIVES:begin
 
-                                         // Clears lives HEX Panel on the screen
-                                         // pixel by pixel
+                                         // Clears one pixel of the lives HEX Panel on the screen
                                          for(u = 0; u <= 7; u = u + 1)
                                          begin
                                               vga_x[u] = HEX2_X[8 * HEXD2_INDEX + u];
                                               vga_y[u] = HEX2_Y[8 * HEXD2_INDEX + u];
                                          end
-
+                                         
+                                         // outputs new color to VGA buffer module 
                                          vga_color[0] = HEX2_COLOR[3 * HEXD2_INDEX];
                                          vga_color[1] = HEX2_COLOR[3 * HEXD2_INDEX + 1];
                                          vga_color[2] = HEX2_COLOR[3 * HEXD2_INDEX + 2];
@@ -1515,7 +1516,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
             curr_y[car_index*8+7] <= t_curr_car_y[7];
         end
         
-        // Updates position of all current cars if load is enabled or during reset
+        // updates position of all current cars if load is enabled or during reset
         if(load_currCarsData || current_state == S_RESET1_CYCLE1)
         begin
            curr_x <= t_curr_x;
@@ -1570,18 +1571,18 @@ next the next write enable signal or reset_n = 1'b0;
 **/
 module displayOut(clock, reset_n, x, y, load, color, x_out, y_out, color_out);
    
-   // stores display outputs to be loaded
+   // declares display inputs to be loaded
    input [7:0] x;
    input [7:0] y;
    input [2:0] color;
    
-   // load parameter
+   // declares load parameter
    input load;
    
-   // clock and active-low reset inputs
+   // declares clock and active-low reset inputs
    input clock, reset_n;
 
-   // output data registers to vga module
+   // decalres output data registers to vga module
    output reg [7:0] x_out;
    output reg [7:0] y_out;
    output reg [2:0] color_out;
@@ -1594,7 +1595,7 @@ module displayOut(clock, reset_n, x, y, load, color, x_out, y_out, color_out);
       color_out = 3'b000;
    end
    
-   // Processes loading or reset during the positive edge of the clock
+   // processes loading or reset during the positive edge of the clock
    always @(posedge clock)
    begin
       if(!reset_n)
@@ -1632,29 +1633,29 @@ also be read from the memory module.
 module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable,
 pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
 
-    // clock, active-low reset and divider pulse input signals
+    // declares clock, active-low reset and divider pulse input signals
     input clock, reset_n,  pulse_in;
     
-    // inputs from memory output
+    // declares inputs from memory output
     input [7:0] x;
     input [7:0] y;
     input [2:0] color;
     
-    // divider enable and reset signals
+    // declares divider enable and reset signals
     output reset_divider, divider_enable;
     
-    // game start signal
+    // declares game start signal
     input start_game;     
 
-    // output values to memory
+    // declares output values to memory
     output reg [7:0] x_out;
     output reg [7:0] y_out;
     output reg [2:0] color_out;
     
-    // load player singal
+    // declares load player output signal
     output reg load_player;
 
-    // Movement inputs from keys
+    // declares movement inputs from keys
     input up, down, left, right;
     
     reg [4:0] current_state, next_state;
@@ -1777,30 +1778,30 @@ right if and only if dir = 1'b1;
 module controlCar(clock, reset_n, start_game, reset_divider, divider_enable,
 pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
 
-    // clock, active-low reset, divider pulse input signals
+    // declares clock, active-low reset, divider pulse input signals
     input clock, reset_n,  pulse_in;
 
-    // inputs for car data from memory output
+    // declares inputs for car data from memory output
     input [7:0] x;
     input [119:0] y;
     input [44:0] color;
     input [3:0] n_cars;
 
-    // Start game input signal from master control unit
+    // decalres start game input signal from master control unit
     input start_game;
     
     // declares car movement direction: dir = 1 iff car moves right
     input dir;    
 
-    // Reset and enable output to the divider
+    // decalres reset and enable outputs to the divider
     output reset_divider, divider_enable;
 
-    // Output-values to memory
+    // declares output car data to memory
     output reg [7:0] x_out;
     output reg [119:0] y_out;
     output reg [44:0] color_out;
     
-    // car1 load enable signal
+    // decalres car1 load signal
     output reg load_car;
     
     reg [4:0] current_state, next_state;
@@ -1826,7 +1827,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
     always @(*)
     begin
 
-       // By default make all our signals 0
+       // makes all our inputs 0 by default
        load_car = 1'b0;
        x_out = 0;
        y_out = 0;
@@ -1840,7 +1841,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
                              	  if (x != `MAX_X)
                                   begin
                                 
-                                       // Moves car to the right if MAX_X is not reached
+                                       // moves car to the right if MAX_X is not reached
                                        x_out = x + 8'b0000_0001;
                                        y_out = y;
                                        color_out = color;
@@ -1849,7 +1850,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
                                   else
                                   begin
 
-                                       // Moves car across the screen and back to x=0 position if 
+                                       // moves car across the screen and back to x=0 position if 
                                        // MAX_X is reached.
                                        x_out = 8'b0000_0000;
                                        y_out = y;
@@ -1862,7 +1863,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
                                   if (x != 8'b0000_0000)
                                   begin
                                 
-                                       // Moves car to the right if MAX_X is not reached
+                                       // moves car to the left if x = 0 is not reached
                                        x_out = x - 8'b0000_0001;
                                        y_out = y;
                                        color_out = color;
@@ -1871,8 +1872,8 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
                                    else
                                    begin
 
-                                       // Moves car across the screen and back to x=0 position if 
-                                       // MAX_X is reached.
+                                       // moves car across the screen and back to MAX_X position if 
+                                       // x = 0 is reached
                                        x_out = `MAX_X;
                                        y_out = y;
                                        color_out = color;
@@ -1922,29 +1923,30 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
  load_car3, load_num_cars, load_num_cars1, load_num_cars2, load_num_cars3, load_player,
  load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
 
-     // CLOCK_50 and active low reset inputs
+     // declares CLOCK_50 and active low reset inputs
      input clock, reset_n;
      
-     // Operation signal inputs
+     // declare operation signal inputs
      input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score,
      reset_score, init_cars_data, init_player_data;
      input load_num_cars1, load_num_cars2, load_num_cars3;
 
-     // Number of each type of car objects (15 max) input
+     // decalres number of each type of car objects (15 max) input
      input [3:0] n_car1_in;
      input [3:0] n_car2_in;
      input [3:0] n_car3_in;
      
-     // Output of number of cars of each type
+     // declares output of number of cars of each type
      output reg [3:0] n_car1_out;
      output reg [3:0] n_car2_out;
      output reg [3:0] n_car3_out;
-
+     
+     // declares temp number of cars of each type to be loaded
      reg [3:0] t_n_car1_out;
      reg [3:0] t_n_car2_out;
      reg [3:0] t_n_car3_out;
      
-     // Inputs for car positions of each type
+     // declares inputs for car positions of each type
      input [7:0] car1_x_in;
      input [119:0] car1_y_in;
      
@@ -1954,35 +1956,36 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      input [7:0] car3_x_in;
      input [119:0] car3_y_in;
      
-     // Inputs for car colors of each type
+     // decalres inputs for car colors of each type
      input [44:0] car1_color_in;
      input [44:0] car2_color_in;
      input [44:0] car3_color_in;
      
-     // Player data inputs
-     input [7:0]player_x_in;
-     input [7:0]player_y_in;
-     input [2:0]player_color_in;
+     // decalres player data inputs
+     input [7:0] player_x_in;
+     input [7:0] player_y_in;
+     input [2:0] player_color_in;
      
-     // Number of lives and score inputs
+     // decalres number of lives and score inputs
      input [3:0] lives_in;
      input [7:0] score_in;
 
-     // 90 bit random number input from random number generator module
+     // decalres 90 bit random number input
+     // from random number generator module
      input [89:0] rand_in;
      
-     // Car position outputs
+     // decalres car position outputs
      // There are 15 car1 + 15 car2 + 15 car3 (8bits each)
      output reg [359:0] x;
      output reg [359:0] y;
      
-     // temp registers for storing car positions to be
+     // declare temp registers for storing car positions to be
      // loaded into x and y regs on next positive clock edge
      // during car position init
      reg [359:0] t_x;
      reg [359:0] t_y;
 
-     // temp registers for car positions and colors to be 
+     // decalre temp registers for car positions and colors to be 
      // loaded into x and y regs on next positive lock edge
      // during the corresponding loading of the type of cars
      reg [7:0] t_car1_x;
@@ -1995,35 +1998,35 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      reg [44:0] t_car2_color;
      reg [44:0] t_car3_color;
       
-     // Car color outputs
+     // declares car color outputs
      // Cars' colors: 3bit each * 45 cars = 135 bits
      output reg [134:0] color;
      reg [134:0] t_color;  
    
-     // Player color and coords outputs
+     // decalres player color and coords outputs
      output reg [7:0] playerX;
      output reg [7:0] playerY;
      output reg [2:0] playerColor;
      
-     // Temp registers for player color and coords 
+     // declares temp registers for player color and coords 
      reg [7:0] t_playerX;
      reg [7:0] t_playerY;
      reg [2:0] t_playerColor;
   
-     // Score and lives outputs (15 lives max)
+     // declares score and lives outputs (15 lives max)
      output reg [7:0] score;
      output reg [3:0] lives; 
      
-     // Temp registers for score and lives
+     // declares temp registers for score and lives
      reg [7:0] t_score;
      reg [3:0] t_lives;
 
-     // temp registers for coordinate processing
+     // declares temp registers for coordinate processing
      reg [7:0] tempX;
      reg [7:0] tempY;
      reg [2:0] tempColor;
      
-     // Loop index variables
+     // declares loop index variables
      integer i;
      integer j;
      
@@ -2489,7 +2492,7 @@ is on iff its corresponding output bit is set to 0.
 **/
 module HEXDisplay(HEX,c);
 
-        // decalres output to HEX display
+        // declares output to HEX display
   	output reg[6:0] HEX;
         
         // declares input value
@@ -2532,9 +2535,12 @@ the following post on StackOverflow:
 https://stackoverflow.com/questions/14497877/how-to-implement-a-pseudo-hardware-random-number-generator
 **/
 module fibonacci_lfsr_90bit(
+
+  // declares clock and active-low reset inputs
   input clk,
   input rst_n,
 
+  // declares 90 bit random number output
   output reg [89:0] data
 );
 
@@ -2595,9 +2601,12 @@ endmodule
  */
 module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
 
+   // declares HEX number and offset inputs
    input [3:0] in;
    input [7:0] offsetX;
    input [7:0] offsetY;
+
+   // decalres x, y, and color array outputs
    output reg [119:0] xArray;
    output reg [119:0] yArray;
    output reg [0:44] colorArray;
