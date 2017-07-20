@@ -52,35 +52,51 @@
    Global Constant Declarations
 **/
 
-// Max coords
+// Defines Max coords
 `define MAX_X 159
 `define MAX_Y 119
 
-// Y range of safe zone
+// Defines Y range of safe zone
 `define SAFE_Y_MIN 100
 `define SAFE_Y_MAX 119
 
-// Y range of War zone
+// Defines Y range of War zone
 `define WAR_Y_MIN 0
 `define WAR_Y_MAX 99
 
-// Player spawn spot
+// Defines Score display panels constants
+`define HEX0_X 157
+`define HEX0_Y 114
+
+`define HEX1_X 153
+`define HEX1_Y 114
+
+// Defines Life display panel constants
+`define HEX2_X 149
+`define HEX2_Y 114
+
+`define HEX_PANEL_MIN_X 149
+`define HEX_PANEL_MAX_X 159
+`define HEX_PANEL_MIN_Y 114
+`define HEX_PAENL_MAX_Y 119
+
+// Defines Player spawn location
 `define PLAYER_SPAWN_X 80
 `define PLAYER_SPAWN_Y 115
 
-// Player color
+// Defines Player color
 `define PLAYER_COLOR 1
 
-// Periods of Cars
-`define CAR1_CYCLES 26'd1499999
-`define CAR2_CYCLES 26'd2499999
-`define CAR3_CYCLES 26'd3499999
+// Defines Periods of Cars
+`define CAR1_CYCLES 26'd799999
+`define CAR2_CYCLES 26'd899999
+`define CAR3_CYCLES 26'd999999
 
-// Update period of player
-`define PLAYER_CYCLES 26'd5499999
+// Defines Update period of player
+`define PLAYER_CYCLES 26'd3099999
 
-// Period of collision grace
-`define COLLISION_GRACE_PERIOD 26'd4499999
+// Defines Period of collision grace
+`define COLLISION_GRACE_PERIOD 26'd3100000
 
 /**
 Inputs: SW, KEY, CLOCK_50
@@ -105,10 +121,11 @@ module RoadCrosser
 	(
 		CLOCK_50,						//	On Board 50 MHz
 
+		// Your inputs and outputs here
         	KEY,
         	SW,
 
-		// The ports below are for the VGA output.
+		// The ports below are for the VGA output.  Do not change.
 		VGA_CLK,   						//	VGA Clock
 		VGA_HS,							//	VGA H_SYNC
 		VGA_VS,							//	VGA V_SYNC
@@ -120,14 +137,16 @@ module RoadCrosser
  		HEX0, HEX1, HEX2				
 	);
 
-	input   CLOCK_50;				                //	50 MHz
+	input		CLOCK_50;				        //	50 MHz
 	input   [9:0]   SW;
 	input   [3:0]   KEY;
 
-        output [6:0] HEX0;                                              //      score digit 1
-        output [6:0] HEX1;                                              //      score digit 2
-        output [6:0] HEX2;                                              //      number of lives
+        output [6:0] HEX0;  // score
+        output [6:0] HEX1;  // score
+        output [6:0] HEX2;  // lives
 
+	// Declare your inputs and outputs here
+	// Do not change the following outputs
 	output			VGA_CLK;   				//	VGA Clock
 	output			VGA_HS;					//	VGA H_SYNC
 	output			VGA_VS;					//	VGA V_SYNC
@@ -140,6 +159,7 @@ module RoadCrosser
 	wire resetn;
 	assign resetn = SW[9];
         
+	
 	// declares the colour, x, y and writeEn wires that are vga inputs from controller output.
 	wire [2:0] colour;
 	wire [7:0] x;
@@ -149,10 +169,10 @@ module RoadCrosser
         // Output of startGame value from master control
         wire startGameOut;
 
-	// Creates an Instance of a VGA controller - there can be only one!
-	// Defines the number of colours as well as the initial background
+	// Create an Instance of a VGA controller - there can be only one!
+	// Define the number of colours as well as the initial background
 	// image file (.MIF) for the controller.
-	/**vga_adapter VGA(
+	vga_adapter VGA(
 			.resetn(resetn),
 			.clock(CLOCK_50),
 			.colour(colour),
@@ -171,7 +191,7 @@ module RoadCrosser
 		defparam VGA.RESOLUTION = "160x120";
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
-		defparam VGA.BACKGROUND_IMAGE = "black.mif";**/
+		defparam VGA.BACKGROUND_IMAGE = "black.mif";
     
      // declares load parameters from master control to RAM
      wire w_load_num_cars;
@@ -186,7 +206,7 @@ module RoadCrosser
      // decalres wires for load objects parameters from RAM to the corresponding object controls
      wire w_load_car1, w_load_car2, w_load_car3, w_load_player;
 
-     // declares wires for score output from RAM (digits: LSB at 0; MSB at 7)
+     // // declares wires for score output from RAM (digits: LSB at 0; MSB at 7)
      // score is based on Y coordinate
      wire [7:0] w_score; 
 
@@ -221,17 +241,17 @@ module RoadCrosser
      wire w_start_reset_processing;
      
      // declares wires to input SW into master control
-     // resetn for master control is controlled by SW[9] separately without using this wire
+     // Resetn for master control is controlled by SW[9] separately without using this wire
      wire [9:0] SW_master_control_in;
      
      // declares wire to input the go singnal into master control
      wire go_master_control_in;
      
-     // enables go and SW inputs iff game is not resetting or running the level
+     // enables go and SW inputs  iff game is not resetting or running the level
      assign go_master_control_in = (w_start_reset_processing || startGameOut) ? 1'b0 : ~KEY[0];
      assign SW_master_control_in = (w_start_reset_processing || startGameOut) ? 1'b0 : SW;
      
-     // declares wires player data outputsfrom RAM
+     // declares wires player data outputs from RAM
      wire [7:0] w_player_x_ram_out;
      wire [7:0] w_player_y_ram_out;
      wire [2:0] w_player_color_ram_out;
@@ -269,6 +289,7 @@ module RoadCrosser
      assign w_car3_y_ram_out = w_y_ram_out[359:240];
      assign w_car3_color_ram_out = w_color_ram_out[134:90];
      
+
      // declares wires for Car1 data inputs into RAM
      wire [7:0] w_car1_x_ram_in;
      wire [119:0] w_car1_y_ram_in;
@@ -308,6 +329,19 @@ module RoadCrosser
      wire [7:0] w_vgaPath_x_in;
      wire [7:0] w_vgaPath_y_in;
      wire [2:0] w_vgaPath_color_in;
+     
+     // Declares score data output from HEX VGA decoders to master control path
+     wire [119:0] w_HEX0_X;
+     wire [119:0] w_HEX0_Y;
+     wire [0:44] w_HEX0_COLOR;
+     
+     wire [119:0] w_HEX1_X;
+     wire [119:0] w_HEX1_Y;
+     wire [0:44] w_HEX1_COLOR;
+
+     wire [119:0] w_HEX2_X;
+     wire [119:0] w_HEX2_Y;
+     wire [0:44] w_HEX2_COLOR;
     
      // Module instance declartions with wiring are listed below:     
      // declares wiring and instance for master control module
@@ -324,20 +358,22 @@ module RoadCrosser
      .vga_y(w_vgaPath_y_in), .SW_in(SW_master_control_in), .memReset(w_mem_reset_in),
      .start_reset_processing(w_start_reset_processing), .objects_reset(w_objects_reset),
      .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace),
-     .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1));
+     .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1), .HEX0_X(w_HEX0_X), .HEX0_Y(w_HEX0_Y),
+     .HEX0_COLOR(w_HEX0_COLOR), .HEX1_X(w_HEX1_X), .HEX1_Y(w_HEX1_Y), .HEX1_COLOR(w_HEX1_COLOR), 
+     .HEX2_X(w_HEX2_X), .HEX2_Y(w_HEX2_Y), .HEX2_COLOR(w_HEX2_COLOR));
      
-     // declares wiring and instance for vga data buffer module
+     // declares instance for vga data buffer module
      displayOut vgaPath (.clock(CLOCK_50), .reset_n(1'b1), .x(w_vgaPath_x_in), .y(w_vgaPath_y_in),
      .load(w_load_vga), .color(w_vgaPath_color_in), .x_out(x), .y_out(y), .color_out(colour));
      
-     // declares wiring and instance for player control module
+     // declares instance for player control module
      controlPlayer cPlayer(.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut),
      .reset_divider(playerD_reset), .divider_enable(playerD_enable), .pulse_in(playerD_pulse),
      .up(KEY[3]), .down(KEY[2]), .left(KEY[1]), .right(KEY[0]), .x(w_player_x_ram_out), .y(w_player_y_ram_out),
      .color(w_player_color_ram_out), .load_player(w_load_player), .x_out(w_player_x_ram_in),
      .y_out(w_player_y_ram_in), .color_out(w_player_color_ram_in));
 
-     // declares wiring and instance for car control modules of different movement speeds
+     // declares instance for car control modules of different movement speeds
      controlCar cCar1 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut),
      .reset_divider(car1D_reset), .divider_enable(car1D_enable), .pulse_in(car1D_pulse),
      .x(w_car1_x_ram_out), .y(w_car1_y_ram_out), .color(w_car1_color_ram_out), .dir(1'b1),
@@ -347,15 +383,15 @@ module RoadCrosser
      controlCar cCar2 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut),
      .reset_divider(car2D_reset), .divider_enable(car2D_enable), .pulse_in(car2D_pulse),
      .x(w_car2_x_ram_out), .y(w_car2_y_ram_out), .color(w_car2_color_ram_out), .dir(1'b0),
-     .n_cars(w_n_car2_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in), .y_out(w_car2_y_ram_in),
-     .color_out(w_car2_color_ram_in));
+     .n_cars(w_n_car2_ram_out), .load_car(w_load_car2), .x_out(w_car2_x_ram_in),
+     .y_out(w_car2_y_ram_in), .color_out(w_car2_color_ram_in));
 
      controlCar cCar3 (.clock(CLOCK_50), .reset_n(w_objects_reset), .start_game(startGameOut),
      .reset_divider(car3D_reset), .divider_enable(car3D_enable), .pulse_in(car3D_pulse), .x(w_car3_x_ram_out),
      .y(w_car3_y_ram_out), .color(w_car3_color_ram_out), .dir(1'b1), .n_cars(w_n_car3_ram_out),
      .load_car(w_load_car3), .x_out(w_car3_x_ram_in), .y_out(w_car3_y_ram_in), .color_out(w_car3_color_ram_in));
      
-     // declares wiring and instance for memory module / datapath 
+     // declares instance for memory module / datapath 
      memory RAM(.clock(CLOCK_50), .reset_n(w_mem_reset_in), .x(w_x_ram_out), .y(w_y_ram_out),
      .color(w_color_ram_out), .playerX(w_player_x_ram_out), .playerY(w_player_y_ram_out),
      .playerColor(w_player_color_ram_out), .score(w_score), .lives(w_lives), .n_car1_out(w_n_car1_ram_out),
@@ -371,14 +407,24 @@ module RoadCrosser
      .load_score(w_load_score), .reset_score(w_reset_score), .init_cars_data(w_init_cars_data),
      .init_player_data(w_init_player_data), .rand_in(rand_to_mem));
      
-     // declares wiring and instance for score display on HEX0 and HEX1
+     // declares instance for score display on HEX0 and HEX1
      HEXDisplay score1 (.HEX(HEX0[6:0]), .c(w_score[3:0]));
      HEXDisplay score2 (.HEX(HEX1[6:0]), .c(w_score[7:4]));
 
-     // declares wiring and instance for number of lives display on HEX2
+     // declares instance for number of lives display on HEX2
      HEXDisplay livesHEX (.HEX(HEX2[6:0]), .c(w_lives));
      
-     // declares wiring and instance for rate dividers controlling different speeds of 
+     // declares instances for vga hex panel decoders for score
+     HEX_VGA d0(.xArray(w_HEX0_X), .yArray(w_HEX0_Y), .offsetX(`HEX0_X), .offsetY(`HEX0_Y),
+     .colorArray(w_HEX0_COLOR), .in(w_score[3:0]) );
+     HEX_VGA d1(.xArray(w_HEX1_X), .yArray(w_HEX1_Y), .offsetX(`HEX1_X), .offsetY(`HEX1_Y),
+     .colorArray(w_HEX1_COLOR), .in(w_score[7:4]) );
+     
+     // declares instance for vga hex panel decoders for in game life display panel
+     HEX_VGA d2(.xArray(w_HEX2_X), .yArray(w_HEX2_Y), .offsetX(`HEX2_X), .offsetY(`HEX2_Y),
+     .colorArray(w_HEX2_COLOR), .in(w_lives) );
+     
+     // declares instances for rate dividers controlling different speeds of 
      // cars and the update rate of the player movements
      RateDivider car1D (.clock(CLOCK_50), .reset_n(car1D_reset), .enable(car1D_enable),
      .period(`CAR1_CYCLES), .pulse(car1D_pulse));  
@@ -388,23 +434,25 @@ module RoadCrosser
 
      RateDivider car3D (.clock(CLOCK_50), .reset_n(car3D_reset), .enable(car3D_enable),
      .period(`CAR3_CYCLES), .pulse(car3D_pulse));  
-
+     
      RateDivider playerD (.clock(CLOCK_50), .reset_n(playerD_reset), .enable(playerD_enable),
      .period(`PLAYER_CYCLES), .pulse(playerD_pulse));  
      
-     // declares wiring and instance for counter used in collision grace period in master control module
+     // declares instance for counter used in collision grace period in master control module
      counter collisionGraceCounter (.clock(CLOCK_50), .reset_n(w_reset_cgrace),
      .reset_n_pulse_1(w_reset_cgrace_pulse1) ,
      .pulse(w_cgrace_over_pulse), .limit(`COLLISION_GRACE_PERIOD));
      
-     // declares wiring and instance for 90 bit random generator module inspired by online sources
+     // declares instance for 90 bit random generator module inspired by online sources
      fibonacci_lfsr_90bit rand(.clk(CLOCK_50),  .rst_n(1'b1),  .data(rand_to_mem));
 endmodule
 
 /**
-Inputs: clock, reset_n, x, y, collision_grace_over_pulse, n_car1, n_car2, n_car3,
-        color, playerX, playerY, playerColor, lives, score, go
-
+Inputs: clock, reset_n, x, y, SW_in, collision_grace_over_pulse, n_car1,
+        n_car2, n_car3, color, playerX, playerY, playerColor, lives,
+        score, go, HEX0_X, HEX0_Y, HEX0_COLOR, HEX1_X, HEX1_Y, HEX1_COLOR,
+        HEX2_X, HEX2_Y, HEX2_COLOR
+        
 Outputs: plot, cga_color, vga_x, vga_y, memReset, load_num_cars, load_lives, 
          load_vga, load_score, reset_score, init_cars_data, init_player_data, 
          collision_grace_counter_reset_n, collision_grace_counter_resetn_pulse1,
@@ -412,13 +460,13 @@ Outputs: plot, cga_color, vga_x, vga_y, memReset, load_num_cars, load_lives,
          n_car3_out, lives_out, score_out, load_num_cars1, load_num_cars2,
          load_num_cars3
 
-This module creates a master control path for the game.
+This module creates a master control path for this game.
 It is driven by CLOCK_50 and has an active low reset. 
 Numerous inputs and outputs are avaiable to read or
 write to the memory module. Player inputs before the
 game starts are also processed here. Once the game
 starts, the control path performs updates iff changes
-to the data in memory are observed. The updates
+to the objects' positions in memory are observed. The updates
 happen in the following order: Clear Previous Objects
 On Screen -> Plot New Objects On Screen -> Detect Collision
 -> Check Winning Condition. If the game ends during this
@@ -434,8 +482,9 @@ load_num_cars2 , load_num_cars3, load_lives, load_vga, load_score, reset_score,
 init_cars_data, init_player_data, n_car1, n_car2, n_car3, n_car1_out, n_car2_out,
 n_car3_out, x, y, color, playerX, playerY, playerColor, score, lives, lives_out,
 score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing,
-objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n,
-collision_grace_counter_resetn_pulse1);
+objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n, 
+collision_grace_counter_resetn_pulse1, HEX0_X, HEX0_Y, HEX0_COLOR, HEX1_X, 
+HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
 
     input clock, reset_n;
     input [9:0] SW_in;    
@@ -461,7 +510,7 @@ collision_grace_counter_resetn_pulse1);
     reg [7:0] checkY;
     reg [2:0] checkColor;
 
-    // declares loading-code outputs to memory
+    // loading-codes to memory
     output reg load_num_cars, load_lives, load_score, reset_score,
     init_cars_data, init_player_data, load_vga;
     output reg load_num_cars1, load_num_cars2 , load_num_cars3;
@@ -477,13 +526,13 @@ collision_grace_counter_resetn_pulse1);
     // Updates all current cars data based on the value of t_curr_x and t_curr_y
     reg load_currCarsData;
 
-    // declares negative-edge triggered reset control to game object controlpaths
+    // code n-edge triggered reset control to game objects
     output reg objects_reset;    
 
     // controls start of the game
     output reg start_game;
     
-    // temp variable for storing game statuses and their load enable values
+    // temp variable storing game statuses and their load enable values
     reg t_start_game;
     reg load_start_game_status;
 
@@ -553,18 +602,40 @@ collision_grace_counter_resetn_pulse1);
     // output for player lives and score to memory
     output reg [3:0] lives_out;
     output reg [7:0] score_out;
+
+    // decalres inputs from HEX Display panel decoders
+    input [119:0] HEX0_X;
+    input [119:0] HEX0_Y;
+    input [0:44] HEX0_COLOR;
+
+    input [119:0] HEX1_X;
+    input [119:0] HEX1_Y;
+    input [0:44] HEX1_COLOR;
+
+    input [119:0] HEX2_X;
+    input [119:0] HEX2_Y;
+    input [0:44] HEX2_COLOR;
     
-    // declares go button for setting lives and number of cars during selection states
+    // Go button during lives and number of cars selection states
     input go;
     
     // state registers
     reg [6:0] current_state;
     reg [6:0] next_state;
     
-    // stores index of car during graphic update (car_index for drawing cars; car_index2 for clearing cars)
+    // stores index of car during graphic update 
+    // (car_index for drawing cars; car_index2 for clearing cars)
     integer car_index;
     integer car_index2;
-
+    
+    // declares hex display pixel display counters
+    integer HEXD0_CLEAR_INDEX;
+    integer HEXD1_CLEAR_INDEX;
+    integer HEXD2_CLEAR_INDEX;
+    integer HEXD0_INDEX;
+    integer HEXD1_INDEX;
+    integer HEXD2_INDEX;
+    
     // loop accumulation variables
     integer i;
     integer j;
@@ -572,6 +643,12 @@ collision_grace_counter_resetn_pulse1);
     integer l;
     integer m;
     integer o;
+    integer p;
+    integer q;
+    integer r;
+    integer s;
+    integer t;
+    integer u;
 
     // generates coordinates for y and x (8 bit each) to clear the entire screen
     // during reset
@@ -596,11 +673,26 @@ collision_grace_counter_resetn_pulse1);
                S_UPDATE_GRAPHICS_CLEAR = 7'd11,
                S_UPDATE_GRAPHICS_CLEAR_CYCLE1 = 7'd24,
                S_UPDATE_GRAPHICS_CLEAR_CYCLE2 = 7'd25,
-               S_UPDATE_GRAPHICS_CLEAR_CYCLE3 = 7'd43,
+               S_UPDATE_GRAPHICS_CLEAR_CYCLE3 = 7'd65,
                S_UPDATE_GRAPHICS_CLEAR_CARS_END = 7'd33,
                S_UPDATE_GRAPHICS_CLEAR_PLAYER = 7'd31,
                S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1 = 7'd32,
                S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2 = 7'd34, 
+               S_UPDATE_GRAPHICS_CLEAR_PLAYER_END = 7'd43,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0 = 7'd44,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE1 = 7'd45,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2 = 7'd46,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3 = 7'd47,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END = 7'd48,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1 = 7'd49,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE1 = 7'd50,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2 = 7'd51,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3 = 7'd52,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END = 7'd53,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES = 7'd66,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE1 = 7'd67, 
+               S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2 = 7'd68,
+               S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3 = 7'd69,
                S_UPDATE_GRAPHICS_CLEAR_END = 7'd18,
                S_UPDATE_GRAPHICS_CARS  = 7'd19,
                S_UPDATE_GRAPHICS_CARS_CYCLE1 = 7'd26,
@@ -609,6 +701,22 @@ collision_grace_counter_resetn_pulse1);
                S_UPDATE_GRAPHICS_CARS_END  = 7'd20,
                S_UPDATE_GRAPHICS_PLAYER = 7'd12,
                S_UPDATE_GRAPHICS_PLAYER_CYCLE1 = 7'd28,
+               S_UPDATE_GRAPHICS_PLAYER_END = 7'd64,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D0 = 7'd54,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE1 = 7'd55,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2 = 7'd56,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3 = 7'd57,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D0_END = 7'd58,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D1 = 7'd59,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE1 = 7'd60,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2 = 7'd61,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3 = 7'd62,
+               S_UPDATE_GRAPHICS_HEX_SCORE_D1_END = 7'd63,
+               S_UPDATE_GRAPHICS_HEX_LIVES = 7'd70,
+               S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE1 = 7'd71,
+               S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2 = 7'd72,
+               S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3 = 7'd73,
+               S_UPDATE_GRAPHICS_HEX_LIVES_END = 7'd74,
                S_UPDATE_GRAPHICS_WAIT   = 7'd13,
                S_COLLISION_DETECTION    = 7'd14,
                S_COLLISION_DETECTION_CYCLE1 = 7'd35,
@@ -647,6 +755,18 @@ collision_grace_counter_resetn_pulse1);
        l = 0;
        m = 0;
        o = 0;
+       p = 0;
+       q = 0;
+       r = 0;
+       s = 0;
+       t = 0;
+       u = 0;
+       HEXD0_CLEAR_INDEX = 0;
+       HEXD1_CLEAR_INDEX = 0;
+       HEXD2_CLEAR_INDEX = 0;
+       HEXD0_INDEX = 0;
+       HEXD1_INDEX = 0;
+       HEXD2_INDEX = 0; 
     end       
                
     always @(*)
@@ -670,11 +790,25 @@ collision_grace_counter_resetn_pulse1);
               S_UPDATE_GRAPHICS_CLEAR: next_state =  S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE3;
-              S_UPDATE_GRAPHICS_CLEAR_CYCLE3: next_state = (car_index2 == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END  : S_UPDATE_GRAPHICS_CLEAR;
+              S_UPDATE_GRAPHICS_CLEAR_CYCLE3: next_state = (car_index2 == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END:S_UPDATE_GRAPHICS_CLEAR;
               S_UPDATE_GRAPHICS_CLEAR_CARS_END: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER; 
               S_UPDATE_GRAPHICS_CLEAR_PLAYER: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2;
-              S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2: next_state =  S_UPDATE_GRAPHICS_CLEAR_END;
+              S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2: next_state =  S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0; // change here for testing
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE1;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3: next_state = (HEXD0_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END : S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE1;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3: next_state = (HEXD1_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END : S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END: next_state =  S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE1;
+	      S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3: next_state = (HEXD2_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_END : S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES;
               S_UPDATE_GRAPHICS_CLEAR_END:  next_state = S_UPDATE_GRAPHICS_CARS;
               S_UPDATE_GRAPHICS_CARS: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE1;
               S_UPDATE_GRAPHICS_CARS_CYCLE1: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE2;
@@ -682,7 +816,23 @@ collision_grace_counter_resetn_pulse1);
               S_UPDATE_GRAPHICS_CARS_CYCLE3: next_state = (car_index == 45) ?  S_UPDATE_GRAPHICS_CARS_END : S_UPDATE_GRAPHICS_CARS;
               S_UPDATE_GRAPHICS_CARS_END: next_state = S_UPDATE_GRAPHICS_PLAYER;
               S_UPDATE_GRAPHICS_PLAYER: next_state = S_UPDATE_GRAPHICS_PLAYER_CYCLE1;
-              S_UPDATE_GRAPHICS_PLAYER_CYCLE1: next_state = S_COLLISION_DETECTION; // changed for testing
+              S_UPDATE_GRAPHICS_PLAYER_CYCLE1: next_state = S_UPDATE_GRAPHICS_PLAYER_END;
+              S_UPDATE_GRAPHICS_PLAYER_END : next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0; // changed for testing
+              S_UPDATE_GRAPHICS_HEX_SCORE_D0: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE1;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE1: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3: next_state = (HEXD0_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_SCORE_D0_END : S_UPDATE_GRAPHICS_HEX_SCORE_D0;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D0_END:  next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D1: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE1;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE1: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3: next_state = (HEXD1_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_SCORE_D1_END : S_UPDATE_GRAPHICS_HEX_SCORE_D1;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D1_END: next_state = S_UPDATE_GRAPHICS_HEX_LIVES;
+              S_UPDATE_GRAPHICS_HEX_LIVES: next_state = S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE1;
+	      S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE1: next_state = S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2;
+              S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2: next_state = S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3;
+              S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3: next_state = (HEXD2_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_LIVES_END : S_UPDATE_GRAPHICS_HEX_LIVES;
+              S_UPDATE_GRAPHICS_HEX_LIVES_END: next_state = S_COLLISION_DETECTION;
               S_COLLISION_DETECTION: next_state = S_COLLISION_DETECTION_CYCLE1;
               S_COLLISION_DETECTION_CYCLE1: next_state = S_COLLISION_DETECTION_CYCLE2;
               S_COLLISION_DETECTION_CYCLE2: next_state = S_COLLISION_DETECTION_END;
@@ -761,6 +911,12 @@ collision_grace_counter_resetn_pulse1);
       l = 0;
       m = 0;
       o = 0;
+      p = 0;
+      q = 0;
+      r = 0;
+      s = 0;
+      t = 0;
+      u = 0;
 
       case (current_state)
            S_LIVES_INPUT: begin
@@ -797,14 +953,11 @@ collision_grace_counter_resetn_pulse1);
                                     
                                  end
            S_INIT_DATA: begin
-
-                           // resets score and initializes car and player data in memory
                            reset_score = 1'b1;
                            init_cars_data =1'b1;
                            init_player_data = 1'b1;
                         end
            S_INIT_DATA_WAIT: begin
-
                                 // Add code here for future development							  
                              end
            S_INIT_DATA_WAIT2: begin
@@ -821,13 +974,14 @@ collision_grace_counter_resetn_pulse1);
                                  load_currPlayer = 1'b1;
                                  load_currCarsData = 1'b1;
                               end
-           S_OBSERVE_INIT : begin
+           S_OBSERVE_INIT: begin
 
                                // Add code here for future development
                             end
            S_OBSERVE_CHANGES: begin
 
-                                 // sets observed_changes to 1 iff changes in the coordinates or colors are observed
+                                 // sets observed_changes to 1 iff changes 
+                                 // in the coordinates or colors are observed
                                  if(curr_x != x || curr_y != y || curr_playerX != playerX 
                                  || curr_playerY != playerY)
                                  begin
@@ -846,14 +1000,16 @@ collision_grace_counter_resetn_pulse1);
                               end
            S_UPDATE_GRAPHICS_CLEAR: begin
 
-                                         // prepares coord x,y, color for plotting black clear pixel
-                                         for (k=0; k<=7; k=k+1)
+                                         // prepares coord x,y, color for plot black clear pixel
+                                         for (k = 0; k <= 7; k = k + 1)
                                          begin
                                             vga_x[k] = curr_x[car_index2*8 + k];
                                             vga_y[k] = curr_y[car_index2*8 + k];
                                          end
+                                         
                                          vga_color = 3'b000;
                                          load_vga = 1'b1;
+
                                     end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE1: begin
 
@@ -866,7 +1022,6 @@ collision_grace_counter_resetn_pulse1);
                                           end
           S_UPDATE_GRAPHICS_CLEAR_CYCLE3: begin
 
-                                             // Add code here for future development
                                           end
           S_UPDATE_GRAPHICS_CLEAR_CARS_END: begin
 
@@ -888,21 +1043,105 @@ collision_grace_counter_resetn_pulse1);
 
                                                     // Add code here for future development
                                                  end
+          S_UPDATE_GRAPHICS_CLEAR_PLAYER_END: begin
+                                                
+                                              end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0: begin
+
+                                                     // Clears first digit of the score on the screen
+                                                     // pixel by pixel
+                                                     for(p = 0; p <= 7; p = p + 1)
+                                                     begin
+                                                          vga_x[p] = HEX0_X[8 * HEXD0_CLEAR_INDEX + p];
+                                                          vga_y[p] = HEX0_Y[8 * HEXD0_CLEAR_INDEX + p];
+                                                     end
+                                                     
+                                                     vga_color = 3'b000;
+                                                     load_vga = 1'b1;
+                                                end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE1: begin
+
+                                                          // Add code here for future development
+                                                       end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2: begin
+
+                                                          // Add code here for future development
+                                                       end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3: begin
+
+                                                          // Add code here for future development
+                                                       end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END: begin
+
+                                                       // Add code here for future development
+                                                    end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1: begin
+
+                                                   // Clears second digit of the score on screen
+                                                   // pixel by pixel
+                                                   for(q = 0; q <= 7; q = q + 1)
+                                                   begin
+                                                        vga_x[q] = HEX1_X[8 * HEXD1_CLEAR_INDEX + q];
+                                                        vga_y[q] = HEX1_Y[8 * HEXD1_CLEAR_INDEX + q];
+                                                   end
+                                                   vga_color = 3'b000;
+                                                   load_vga = 1'b1;
+                                                end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE1: begin
+
+                                                          // Add code here for future development
+                                                       end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2: begin
+
+                                                          // Add code here for future development
+                                                       end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3: begin
+
+                                                          // Add code here for future development
+                                                       end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END: begin
+
+                                                       // Add code here for future development
+                                                    end 
+          S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES: begin
+
+                                                // Clears HEX Lives Panel on screen pixel by pixel
+                                                for(t = 0; t <= 7; t = t + 1)
+                                                begin
+                                                     vga_x[t] = HEX2_X[8 * HEXD2_CLEAR_INDEX + t];
+                                                     vga_y[t] = HEX2_Y[8 * HEXD2_CLEAR_INDEX + t];
+                                                end
+                                                vga_color = 3'b000;
+                                                load_vga = 1'b1;
+                                             end
+	  S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE1: begin
+                                                       
+                                                       // Add code here for future development
+                                                    end 
+	  S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2: begin
+                                                       
+                                                       // Add code here for future development
+                                                    end
+	  S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3: begin
+                                                       
+                                                       // Add code here for future development
+                                                    end
           S_UPDATE_GRAPHICS_CLEAR_END: begin
 
                                           // Initializes car index for updating cars on the screen
-                                          // car_index = 0 in this state;
+                                          // car_index = 0 in this state
+                                          // HEXD2_CLEAR_INDEX = 0 in this state
                                           // Add code here for future development
                                        end
           S_UPDATE_GRAPHICS_CARS: begin
                                      
                                      // updates cars on the screen one by one based on car_index
-                                     for (i=0; i<=7; i=i+1)
+                                     for (i = 0; i <= 7; i = i + 1)
                                      begin
 
 					// stores coordinate plotted for clearing and observation later
-                                        t_curr_car_x[i] = x[car_index*8 + i];
-                                        t_curr_car_y[i] = y[car_index*8 + i];
+                                        t_curr_car_x[i] = x[car_index * 8 + i];
+                                        t_curr_car_y[i] = y[car_index * 8 + i];
                                      end
                                      
                                      // outputs car coordinate to vga module
@@ -910,9 +1149,9 @@ collision_grace_counter_resetn_pulse1);
                                      vga_y = t_curr_car_y;
                                      
                                      // outputs car color to vga module for display bit by bit
-                                     for (j=0; j<=2; j=j+1)
+                                     for (j = 0; j <= 2; j = j + 1)
                                      begin
-                                          vga_color[j] = color[car_index*3 + j]; 
+                                          vga_color[j] = color[car_index * 3 + j]; 
                                      end
                                      
                                      // loads new data for current car into currCar register
@@ -960,28 +1199,126 @@ collision_grace_counter_resetn_pulse1);
                                               score_out = `MAX_Y - curr_playerY;
                                               load_score = 1'b1;
                                            end
+          S_UPDATE_GRAPHICS_PLAYER_END: begin
+                                           
+                                        end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D0: begin
+                                             
+                                             // updates first digit of score on screen pixel by pixel
+                                             for(r = 0; r <= 7; r = r + 1)
+                                             begin
+                                                  vga_x[r] = HEX0_X[8 * HEXD0_INDEX + r];
+                                                  vga_y[r] = HEX0_Y[8 * HEXD0_INDEX + r];
+                                             end
+                                                     
+                                             vga_color[0] = HEX0_COLOR[3 * HEXD0_INDEX];
+                                             vga_color[1] = HEX0_COLOR[3 * HEXD0_INDEX + 1];
+                                             vga_color[2] = HEX0_COLOR[3 * HEXD0_INDEX + 2];
+                                             load_vga = 1'b1;
+                                          end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE1: begin
+                                                    
+ 						    // Add code here for future development
+                                                 end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2: begin
+
+						    // Add code here for future development
+                                                 end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3: begin
+
+						    // Add code here for future development
+                                                 end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D0_END: begin
+
+						 // Add code here for future development
+                                              end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D1: begin
+                                             
+                                             // updates second digit of the score on screen pixel
+                                             // by pixel
+                                             for(s = 0; s <= 7; s = s + 1)
+                                             begin
+                                                  vga_x[s] = HEX1_X[8 * HEXD1_INDEX + s];
+                                                  vga_y[s] = HEX1_Y[8 * HEXD1_INDEX + s];
+                                             end
+                                                     
+                                             vga_color[0] = HEX1_COLOR[3 * HEXD1_INDEX];
+                                             vga_color[1] = HEX1_COLOR[3 * HEXD1_INDEX + 1];
+                                             vga_color[2] = HEX1_COLOR[3 * HEXD1_INDEX + 2];
+                                             load_vga = 1'b1;
+                                          end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE1: begin
+                                                    
+                                                    // Add code here for future development
+                                                 end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2: begin
+                                                    
+                                                    // Add code here for future development
+                                                 end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3: begin
+                                                    
+                                                    // Add code here for future development
+                                                 end
+          S_UPDATE_GRAPHICS_HEX_SCORE_D1_END: begin
+                                                 
+                                                 // Add code here for future development
+                                              end
+          S_UPDATE_GRAPHICS_HEX_LIVES:begin
+
+                                         // Clears lives HEX Panel on the screen
+                                         // pixel by pixel
+                                         for(u = 0; u <= 7; u = u + 1)
+                                         begin
+                                              vga_x[u] = HEX2_X[8 * HEXD2_INDEX + u];
+                                              vga_y[u] = HEX2_Y[8 * HEXD2_INDEX + u];
+                                         end
+
+                                         vga_color[0] = HEX2_COLOR[3 * HEXD2_INDEX];
+                                         vga_color[1] = HEX2_COLOR[3 * HEXD2_INDEX + 1];
+                                         vga_color[2] = HEX2_COLOR[3 * HEXD2_INDEX + 2];
+                                         load_vga = 1'b1;      
+                                      end
+	  S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE1: begin
+                                                  
+                                                 // Add code here for future development
+                                              end
+          S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2: begin
+                                                 
+                                                 // Add code here for future development
+                                              end
+          S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3: begin
+                                                 
+                                                 // Add code here for future development
+                                              end
+          S_UPDATE_GRAPHICS_HEX_LIVES_END: begin
+                                                 
+                                              // Add code here for future development
+                                           end
           S_COLLISION_DETECTION: begin
-                                    for (l = 0; l<=44; l=l+1)
+
+                                    // Processes collision detection
+                                    for (l = 0; l <= 44; l = l + 1)
                                     begin
                                        
                                        // Prepares car coordinate to be checked for collison with player
                                        for (m = 0; m<=7; m=m+1)
                                        begin
-                                          checkX[m] = curr_x[8*l + m];
-                                          checkY[m] = curr_y[8*l + m];
+                                          checkX[m] = curr_x[8 * l + m];
+                                          checkY[m] = curr_y[8 * l + m];
                                        end
  
                                        // Prepares current car's color to be checked
                                        for (o = 0; o<=2; o=o+1)
                                        begin
-                                          checkColor[o] = color[3*l + o];
+                                          checkColor[o] = color[3 * l + o];
                                        end
 
-                                       // Allows collision damage iff collision occurs and car is not invisible(color black) 
-                                       // and collision grace period is over
-                                       // Car can be invisible depending on the number of cars set for the game by the player
+                                       // Allows collision damage iff collision occurs and car
+                                       // is not invisible(color black) and collision grace period is over
+                                       // Car can be invisible depending on the number of cars set for 
+                                       // the game by the player
                                        if(checkX == curr_playerX && checkY == curr_playerY 
-                                         && checkColor!= 3'b000 && collision_grace_over_pulse)
+                                       && checkColor != 3'b000 && collision_grace_over_pulse)
                                        begin
                                              lives_out = lives - 4'b0001;
                                              load_lives = 1'b1;
@@ -995,7 +1332,6 @@ collision_grace_counter_resetn_pulse1);
                                     end
                                  end
            S_COLLISION_DETECTION_CYCLE1: begin
-
                                             // Add code here for future development
                                          end
            S_COLLISION_DETECTION_CYCLE2: begin
@@ -1008,7 +1344,6 @@ collision_grace_counter_resetn_pulse1);
                                             end
                                          end
            S_COLLISION_DETECTION_END: begin
-
                                          // Add code here for future development
                                       end
            S_WIN_DETECTION: begin
@@ -1019,9 +1354,9 @@ collision_grace_counter_resetn_pulse1);
                                   t_start_game = 1'b0;
                                   load_start_game_status = 1'b1;
                                end
+ 
                             end
            S_WIN_DETECTION_END: begin
-
                                    // Winning is decided in this state.
                                    // Add code here for future development
                                 end
@@ -1071,12 +1406,10 @@ collision_grace_counter_resetn_pulse1);
                               load_vga = 1'b1;
                            end
          S_CLEAR_SCREEN_CYCLE1: begin
-
                                    // counter = counter + 1; in this state
                                    // Add code here for future development
                                 end
          S_CLEAR_SCREEN_CYCLE2: begin
-
                                    // Add code here for future development
                                 end
          S_CLEAR_SCREEN_END: begin
@@ -1107,23 +1440,42 @@ collision_grace_counter_resetn_pulse1);
         
         // Updates counting variables based on current_state
         case (current_state)
-             S_INIT_DATA_WAIT2: begin
-                                   car_index2 <= 0;
-                                   car_index <= 0;
-                                   counter <= 0;
-                                end
+             S_INIT_DATA_WAIT2: begin 
+                                    HEXD0_CLEAR_INDEX <= 0;
+                                    HEXD1_CLEAR_INDEX <= 0;
+                                    HEXD2_CLEAR_INDEX <= 0;
+                                    HEXD0_INDEX <= 0;
+                                    HEXD1_INDEX <= 0; 
+                                    HEXD2_INDEX <= 0; 
+                                    counter <= {16{1'b0}};
+                                    car_index2 <= 0;
+                                    car_index <= 0;
+                               end
              S_UPDATE_GRAPHICS_CLEAR_CYCLE2: car_index2 <= car_index2 + 1;
              S_UPDATE_GRAPHICS_CARS_CYCLE2: car_index <= car_index + 1;
              S_CLEAR_SCREEN_CYCLE1: counter <= counter + 1;
              S_UPDATE_GRAPHICS: car_index2 <= 0;
              S_UPDATE_GRAPHICS_CARS_END: car_index <= 0;
              S_UPDATE_GRAPHICS_CLEAR_CARS_END : car_index2 <= 0;
-             S_UPDATE_GRAPHICS_CLEAR_END: car_index <= 0;
+             S_UPDATE_GRAPHICS_CLEAR_END: begin
+                                               car_index <= 0;
+                                               HEXD2_CLEAR_INDEX <= 0;
+                                          end
+             S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2: HEXD0_CLEAR_INDEX <= HEXD0_CLEAR_INDEX + 1;
+             S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2: HEXD1_CLEAR_INDEX <= HEXD1_CLEAR_INDEX + 1;
+             S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2: HEXD2_CLEAR_INDEX <= HEXD2_CLEAR_INDEX + 1;
+             S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2: HEXD0_INDEX <= HEXD0_INDEX + 1;
+             S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2: HEXD1_INDEX <= HEXD1_INDEX + 1;
+             S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2: HEXD2_INDEX <= HEXD2_INDEX + 1;
+             S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END: HEXD0_CLEAR_INDEX <= 0;
+             S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END: HEXD1_CLEAR_INDEX <= 0;
+             S_UPDATE_GRAPHICS_HEX_SCORE_D0_END: HEXD0_INDEX <= 0;
+             S_UPDATE_GRAPHICS_HEX_SCORE_D1_END: HEXD1_INDEX <= 0;
+             S_UPDATE_GRAPHICS_HEX_LIVES_END: HEXD2_INDEX <= 0;
              S_RESET1: counter <= 0;
              S_CLEAR_SCREEN_END: counter <= 0;
         endcase
 
-        // Processes local register loading for master control
         // Updates current player positions registers if load is enabled or during reset
         if(load_currPlayer || current_state == S_RESET1_CYCLE1)
         begin
@@ -1131,7 +1483,7 @@ collision_grace_counter_resetn_pulse1);
             curr_playerY <= t_curr_playerY;
         end
         
-        // Updates position of current car in loop
+        // Updates position of current car in update loop
         if(load_currCarData)
         begin
             curr_x[car_index*8] <= t_curr_car_x[0];
@@ -1153,8 +1505,7 @@ collision_grace_counter_resetn_pulse1);
             curr_y[car_index*8+7] <= t_curr_car_y[7];
         end
         
-        // Updates position of all current cars if load is enabled or
-        // during reset
+        // Updates position of all current cars if load is enabled or during reset
         if(load_currCarsData || current_state == S_RESET1_CYCLE1)
         begin
            curr_x <= t_curr_x;
@@ -1185,7 +1536,13 @@ collision_grace_counter_resetn_pulse1);
    || current_state == S_UPDATE_GRAPHICS_CARS_CYCLE2 
    || current_state == S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2 
    || current_state == S_UPDATE_GRAPHICS_PLAYER_CYCLE1 
-   || current_state == S_CLEAR_SCREEN_CYCLE1) ? 1'b1 : 1'b0;
+   || current_state == S_CLEAR_SCREEN_CYCLE1 
+   || current_state == S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2 
+   || current_state == S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2
+   || current_state == S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2 
+   || current_state == S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2
+   || current_state == S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2
+   || current_state == S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2) ? 1'b1 : 1'b0;
 endmodule
 
 /**
@@ -1262,9 +1619,7 @@ This control unit updates the player's positions by writing
 to the memory module. Data about the player (x, y, and color) can
 also be read from the memory module.
 **/
-module controlPlayer(clock, reset_n, start_game, reset_divider,
-divider_enable, pulse_in, up, down, left, right, x, y, color, load_player,
-x_out, y_out, color_out); 
+module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
 
     // clock, active-low reset and divider pulse input signals
     input clock, reset_n,  pulse_in;
@@ -1338,12 +1693,15 @@ x_out, y_out, color_out);
                              end
                              else if(!down)
                              begin
-                                if(y != `MAX_Y)
+                                if (x < `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
                                 begin
-                                   x_out = x;
-                                   y_out = y + 8'b0000_0001;
-                                   color_out = color;
-                                   load_player = 1'b1;
+                                     if(y != `MAX_Y)
+                                     begin
+                                          x_out = x;
+                                          y_out = y + 8'b0000_0001;
+                                          color_out = color;
+                                          load_player = 1'b1;
+                                     end
                                 end
                              end
                              else if(!left)
@@ -1358,18 +1716,19 @@ x_out, y_out, color_out);
                              end
                              else if(!right)
                              begin
-                                if(x != `MAX_X)
+                                if (x < `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
                                 begin
-                                   x_out = x + 8'b0000_0001;
-                                   y_out = y;
-                                   color_out = color;
-                                   load_player = 1'b1;
+                                     if(x != `MAX_X)
+                                     begin
+                                          x_out = x + 8'b0000_0001;
+                                          y_out = y;
+                                          color_out = color;
+                                          load_player = 1'b1;
+                                     end
                                 end
                              end
-                          end
+                        end
        endcase
-       
-    
     end
 
     // current_state registers
@@ -1449,7 +1808,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
             S_WAIT:  next_state = start_game ? S_WAIT_FOR_PULSE : S_WAIT;
             S_WAIT_FOR_PULSE: next_state = pulse_in ? S_UPDATE_INFO : S_WAIT_FOR_PULSE;
             S_UPDATE_INFO: next_state = S_WAIT_FOR_PULSE;
-            default:     next_state = S_WAIT;
+            default: next_state = S_WAIT;
        endcase
     end
     
@@ -1458,9 +1817,9 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
 
        // By default make all our signals 0
        load_car = 1'b0;
-       x_out =0;
-       y_out =0;
-       color_out =0;
+       x_out = 0;
+       y_out = 0;
+       color_out = 0;
        i = 0;
 
        case (current_state)
@@ -1546,18 +1905,17 @@ reset by the operation reset_score. 8 bit binary numbers are taken from rand_in 
 the three 8 bit x coordinates of the 3 car types when game starts.
 **/
 module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score, lives,
-n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in,
-car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in,
-player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2,
-load_car3, load_num_cars, load_num_cars1, load_num_cars2, load_num_cars3, load_player,
-load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
+ n_car1_out, n_car2_out, n_car3_out, n_car1_in, n_car2_in, n_car3_in, car1_x_in, car2_x_in,
+ car3_x_in, car1_y_in, car2_y_in, car3_y_in, car1_color_in, car2_color_in, car3_color_in,
+ player_x_in, player_y_in, player_color_in, lives_in, score_in, load_car1, load_car2,
+ load_car3, load_num_cars, load_num_cars1, load_num_cars2, load_num_cars3, load_player,
+ load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
 
      // CLOCK_50 and active low reset inputs
      input clock, reset_n;
      
      // Operation signal inputs
-     input load_car1, load_car2, load_car3, load_num_cars,
-     load_player, load_lives, load_score,
+     input load_car1, load_car2, load_car3, load_num_cars, load_player, load_lives, load_score,
      reset_score, init_cars_data, init_player_data;
      input load_num_cars1, load_num_cars2, load_num_cars3;
 
@@ -1824,60 +2182,60 @@ load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
                if(init_cars_data)
                begin
                   
-                  // Initializes data for car1
+                   // Initializes data for car1
                   tempX = rand_in[7:0] % `MAX_X;
-                  for (i=0; i<=14; i=i+1)
+                  for (i = 0; i <= 14; i = i + 1)
                   begin
                      
                      tempY = i * 6 + 2;
-                     tempColor = (i<n_car1_out) ? 3'b100:3'b000;
+                     tempColor = (i < n_car1_out) ? 3'b100:3'b000;
                      
-                     for (j=0; j<=7; j=j+1)
+                     for (j = 0; j <= 7; j = j + 1)
                      begin
-                        t_x[i*8+j] = tempX[j];
-                        t_y[i*8+j] = tempY[j];
+                        t_x[i * 8 + j] = tempX[j];
+                        t_y[i * 8 + j] = tempY[j];
                      end
-                     for (j=0; j<=2; j=j+1) 
+                     for (j = 0; j <= 2; j = j + 1) 
                      begin
-                        t_color[i*3+j] = tempColor[j];
+                        t_color[i * 3 + j] = tempColor[j];
                      end
                   end
                   
                   // Initializes data for car2
                   tempX = rand_in[17:10] % `MAX_X;
-                  for (i=15; i<=29; i=i+1)
+                  for (i = 15; i <= 29; i = i + 1)
                   begin
                      
                      tempY = (i - 15) * 6 + 4;
-                     tempColor = (i-15<n_car2_out) ? 3'b010 : 3'b000;
+                     tempColor = (i - 15 < n_car2_out) ? 3'b010 : 3'b000;
                      
-                     for (j=0; j<=7; j=j+1)
+                     for (j = 0; j <= 7; j = j + 1)
                      begin
-                        t_x[i*8+j] = tempX[j];
-                        t_y[i*8+j] = tempY[j];
+                        t_x[i * 8 + j] = tempX[j];
+                        t_y[i * 8 + j] = tempY[j];
                      end
-                     for (j=0; j<=2; j=j+1) 
+                     for (j = 0; j <= 2; j = j + 1) 
                      begin
-                        t_color[i*3+j] = tempColor[j];
+                        t_color[i * 3 + j] = tempColor[j];
                      end
                   end
                   
                   // Initializes data for car3
                   tempX = rand_in[57:50] % `MAX_X;
-                  for (i=30; i<=44; i=i+1)
+                  for (i = 30; i <= 44; i = i + 1)
                   begin
                      
-                     tempY = (i-30)*6 + 6;
-                     tempColor = (i-30 < n_car3_out) ? 3'b101 : 3'b000;
+                     tempY = (i - 30)*6 + 6;
+                     tempColor = (i - 30 < n_car3_out) ? 3'b101 : 3'b000;
                      
-                     for (j=0; j<=7; j=j+1)
+                     for (j = 0; j <= 7; j = j + 1)
                      begin
-                        t_x[i*8+j] = tempX[j];
-                        t_y[i*8+j] = tempY[j];
+                        t_x[i * 8 + j] = tempX[j];
+                        t_y[i * 8 + j] = tempY[j];
                      end
-                     for (j=0; j<=2; j=j+1) 
+                     for (j = 0; j <= 2; j = j + 1) 
                      begin
-                        t_color[i*3+j] = tempColor[j];
+                        t_color[i * 3 + j] = tempColor[j];
                      end
                   end
                   
@@ -1890,7 +2248,7 @@ load_lives, load_score, reset_score, init_cars_data, init_player_data, rand_in);
                   t_playerX = `PLAYER_SPAWN_X;
                   t_playerY = `PLAYER_SPAWN_Y;
                   t_playerColor =`PLAYER_COLOR;
-               end  
+               end         
         end
      end
 
@@ -2045,7 +2403,7 @@ module RateDivider (clock, reset_n, enable, period, pulse);
 endmodule
 
 /**
-Inputs: clock, reset_n, limit, reset_n_pulse_1
+Input: clock, reset_n, limit, reset_n_pulse_1
 Output: pulse
 
 This module implements a counter
@@ -2070,8 +2428,8 @@ module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
    // initializes q and pulse value
    initial
    begin
-      q = {26{1'b0}};
-      pulse = 1'b1;
+      q = 0;
+      pulse = 1;
    end
    
    always @(posedge clock)
@@ -2080,16 +2438,16 @@ module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
       begin
          
          // resets q and sets pulse to 0
-         q <= {26{1'b0}};
-         pulse <= 1'b0;
+         q <= 0;
+         pulse <= 0;
       end
       
       if(!reset_n_pulse_1)
       begin
 
          // resets q and sets pulse to 0
-         q <= {26{1'b0}};
-         pulse <= 1'b1;
+         q <= 0;
+         pulse <= 1;
       end
       
       if(reset_n && reset_n_pulse_1)
@@ -2099,11 +2457,11 @@ module counter(clock, reset_n, reset_n_pulse_1 , pulse, limit);
          // sets pulse to 1 when q reaches limit
          if(q == limit)
          begin
-            pulse <= 1'b1;
+            pulse <= 1;
          end
          else
          begin
-            q <= q + {{25{1'b0}},1'b1};
+            q <= q + 1;
          end
       end
    end
@@ -2150,8 +2508,8 @@ module HEXDisplay(HEX,c);
 endmodule 
 
 /**
-Inputs: clk, rst_n 
-Output: data
+input: clk, rst_n 
+output: data
 
 Given clk, rst_n, this module
 outputs a 90 bit random number per
@@ -2202,8 +2560,10 @@ endmodule
 /**
  * Inputs:
  * in is a 4 bit binary input that represents values 0 to F
- * offsetX is an 8 bit offset input applied to each 8-bit x coordinate in the output xArray
- * offsetY is an 8 bit offset input applied to each 8-bit y coordinate in the output yArray
+ * offsetX is an 8 bit offset input applied to each 8-bit x coordinate in
+ * the output xArray
+ * offsetY is an 8 bit offset input applied to each 8-bit y coordinate in
+ * the output yArray
  *
  * Outputs: 
  * xArray is a 120 bit output that represents the x coordinates of a 3x5
@@ -2226,14 +2586,14 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
    input [7:0] offsetY;
    output reg [119:0] xArray;
    output reg [119:0] yArray;
-   output reg [44:0] colorArray;
+   output reg [0:44] colorArray;
    
    always @(in or offsetX or offsetY)
    begin
 
         // sets default values for the output registers based on offsetX and offsetY
-        xArray = {120{1'b0}} + {15{offsetX}};
-        yArray = {120{1'b0}} + {15{offsetY}};
+        xArray = {120{1'b0}};
+        yArray = {120{1'b0}};
         colorArray = {45{1'b0}};
         
         // Outputs new coordinate and color arrays based on in
@@ -2333,5 +2693,9 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
              yArray = 120'b00000100_00000100_00000100_00000011_00000011_00000011_00000010_00000010_00000010_00000001_00000001_00000001_00000000_00000000_00000000;
              colorArray = 45'b111111111111000000111111111111000000111000000;
         end
+        
+        // Applies offsets to position of each color
+        xArray = xArray + {15{offsetX}};
+        yArray = yArray + {15{offsetY}};
    end
 endmodule 
