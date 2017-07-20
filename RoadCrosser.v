@@ -785,53 +785,62 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
               S_INIT_DATA_WAIT2: next_state =  S_UPDATE_GRAPHICS; 
               S_OBSERVE_INIT: next_state = S_OBSERVE_CHANGES;
               S_OBSERVE_CHANGES: next_state = S_MAKE_DECISION_BASED_ON_OBSERVATIONS;
-              S_MAKE_DECISION_BASED_ON_OBSERVATIONS : next_state = observed_changes ? S_UPDATE_GRAPHICS : S_OBSERVE_INIT;
-              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR; // changed for testing
+              S_MAKE_DECISION_BASED_ON_OBSERVATIONS : next_state =
+                observed_changes ? S_UPDATE_GRAPHICS : S_OBSERVE_INIT;
+              S_UPDATE_GRAPHICS: next_state = S_UPDATE_GRAPHICS_CLEAR; 
               S_UPDATE_GRAPHICS_CLEAR: next_state =  S_UPDATE_GRAPHICS_CLEAR_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_CYCLE3;
-              S_UPDATE_GRAPHICS_CLEAR_CYCLE3: next_state = (car_index2 == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END:S_UPDATE_GRAPHICS_CLEAR;
+              S_UPDATE_GRAPHICS_CLEAR_CYCLE3: next_state =
+                (car_index2 == 45) ? S_UPDATE_GRAPHICS_CLEAR_CARS_END:S_UPDATE_GRAPHICS_CLEAR;
               S_UPDATE_GRAPHICS_CLEAR_CARS_END: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER; 
               S_UPDATE_GRAPHICS_CLEAR_PLAYER: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2;
-              S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2: next_state =  S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0; // change here for testing
+              S_UPDATE_GRAPHICS_CLEAR_PLAYER_CYCLE2: next_state =  S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0; 
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3;
-              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3: next_state = (HEXD0_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END : S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_CYCLE3: next_state =
+                (HEXD0_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END : S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D0_END: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE1;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3;
-              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3: next_state = (HEXD1_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END : S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_CYCLE3: next_state =
+                (HEXD1_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END : S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1;
               S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1_END: next_state =  S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES;
               S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE1;
 	      S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE1: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2;
               S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE2: next_state = S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3;
-              S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3: next_state = (HEXD2_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_END : S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES;
+              S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES_CYCLE3: next_state =
+                (HEXD2_CLEAR_INDEX == 15) ? S_UPDATE_GRAPHICS_CLEAR_END : S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES;
               S_UPDATE_GRAPHICS_CLEAR_END:  next_state = S_UPDATE_GRAPHICS_CARS;
               S_UPDATE_GRAPHICS_CARS: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE1;
               S_UPDATE_GRAPHICS_CARS_CYCLE1: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE2;
               S_UPDATE_GRAPHICS_CARS_CYCLE2: next_state = S_UPDATE_GRAPHICS_CARS_CYCLE3;
-              S_UPDATE_GRAPHICS_CARS_CYCLE3: next_state = (car_index == 45) ?  S_UPDATE_GRAPHICS_CARS_END : S_UPDATE_GRAPHICS_CARS;
+              S_UPDATE_GRAPHICS_CARS_CYCLE3: next_state =
+                (car_index == 45) ?  S_UPDATE_GRAPHICS_CARS_END : S_UPDATE_GRAPHICS_CARS;
               S_UPDATE_GRAPHICS_CARS_END: next_state = S_UPDATE_GRAPHICS_PLAYER;
               S_UPDATE_GRAPHICS_PLAYER: next_state = S_UPDATE_GRAPHICS_PLAYER_CYCLE1;
               S_UPDATE_GRAPHICS_PLAYER_CYCLE1: next_state = S_UPDATE_GRAPHICS_PLAYER_END;
-              S_UPDATE_GRAPHICS_PLAYER_END : next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0; // changed for testing
+              S_UPDATE_GRAPHICS_PLAYER_END : next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0; 
               S_UPDATE_GRAPHICS_HEX_SCORE_D0: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE1;
               S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE1: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2;
               S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3;
-              S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3: next_state = (HEXD0_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_SCORE_D0_END : S_UPDATE_GRAPHICS_HEX_SCORE_D0;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE3: next_state =
+                (HEXD0_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_SCORE_D0_END : S_UPDATE_GRAPHICS_HEX_SCORE_D0;
               S_UPDATE_GRAPHICS_HEX_SCORE_D0_END:  next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1;
               S_UPDATE_GRAPHICS_HEX_SCORE_D1: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE1;
               S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE1: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2;
               S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2: next_state = S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3;
-              S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3: next_state = (HEXD1_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_SCORE_D1_END : S_UPDATE_GRAPHICS_HEX_SCORE_D1;
+              S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE3: next_state =
+                (HEXD1_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_SCORE_D1_END : S_UPDATE_GRAPHICS_HEX_SCORE_D1;
               S_UPDATE_GRAPHICS_HEX_SCORE_D1_END: next_state = S_UPDATE_GRAPHICS_HEX_LIVES;
               S_UPDATE_GRAPHICS_HEX_LIVES: next_state = S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE1;
 	      S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE1: next_state = S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2;
               S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2: next_state = S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3;
-              S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3: next_state = (HEXD2_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_LIVES_END : S_UPDATE_GRAPHICS_HEX_LIVES;
+              S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE3: next_state =
+                (HEXD2_INDEX == 15) ? S_UPDATE_GRAPHICS_HEX_LIVES_END : S_UPDATE_GRAPHICS_HEX_LIVES;
               S_UPDATE_GRAPHICS_HEX_LIVES_END: next_state = S_COLLISION_DETECTION;
               S_COLLISION_DETECTION: next_state = S_COLLISION_DETECTION_CYCLE1;
               S_COLLISION_DETECTION_CYCLE1: next_state = S_COLLISION_DETECTION_CYCLE2;
@@ -843,7 +852,8 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
               S_RESET1_CYCLE1: next_state = S_CLEAR_SCREEN;
               S_CLEAR_SCREEN: next_state = S_CLEAR_SCREEN_CYCLE1;
               S_CLEAR_SCREEN_CYCLE1: next_state = S_CLEAR_SCREEN_CYCLE2;
-              S_CLEAR_SCREEN_CYCLE2: next_state = (counter == 16'b1111_1111_1111_1111) ? S_CLEAR_SCREEN_END : S_CLEAR_SCREEN;
+              S_CLEAR_SCREEN_CYCLE2: next_state =
+                (counter == 16'b1111_1111_1111_1111) ? S_CLEAR_SCREEN_END : S_CLEAR_SCREEN;
               S_CLEAR_SCREEN_END: next_state = S_LIVES_INPUT;
               default: next_state = S_LIVES_INPUT;         
        endcase
@@ -1619,7 +1629,8 @@ This control unit updates the player's positions by writing
 to the memory module. Data about the player (x, y, and color) can
 also be read from the memory module.
 **/
-module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable, pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
+module controlPlayer(clock, reset_n, start_game, reset_divider, divider_enable,
+pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_out); 
 
     // clock, active-low reset and divider pulse input signals
     input clock, reset_n,  pulse_in;
@@ -2533,27 +2544,30 @@ module fibonacci_lfsr_90bit(
 	// Initializes output value
 	initial
 	begin
-   	     data = 90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
+   	     data =
+             90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
 	end
 
 	// Computes next number to be generated 
-	always @* begin
-  		data_next[89] = data[89]^data[1];
-  		data_next[88] = data[88]^data[0];
+	always @* 
+        begin
+  	     data_next[89] = data[89]^data[1];
+  	     data_next[88] = data[88]^data[0];
 
-  		for (i=87; i>=0; i=i-1)
-  		begin
-     	     	   data_next[i]=data[i]^data_next[i+2];
-  		end
+  	     for (i=87; i>=0; i=i-1)
+  	     begin
+     	     	  data_next[i]=data[i]^data_next[i+2];
+  	     end
 	end
 
 	// Processes reset and updates output
 	always @(posedge clk or negedge rst_n)
         begin
-  		if(!rst_n)
-    		    data <= 90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
-  		else
-    		    data <= data_next;
+  	    if(!rst_n)
+    		data <=
+                90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
+  	    else
+    		data <= data_next;
         end
 endmodule
 
