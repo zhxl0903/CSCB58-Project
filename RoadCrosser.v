@@ -134,18 +134,17 @@ module RoadCrosser
 		VGA_R,   						//	VGA Red[9:0]
 		VGA_G,	 						//	VGA Green[9:0]
 		VGA_B,                                                  //	VGA Blue[9:0]
- 		HEX0, HEX1, HEX2				
+ 		HEX0, HEX1, HEX2, LEDR			
 	);
 
-	input		CLOCK_50;				        //	50 MHz
-	input   [9:0]   SW;
-	input   [3:0]   KEY;
+	input	CLOCK_50;				        	//	50 MHz
+	input  [9:0] SW;
+	input  [3:0] KEY;
+   	output [9:0] LEDR;
+   	output [6:0] HEX0;  						// decalres output to score HEX panel d0
+        output [6:0] HEX1;  						// decalres output to score HEX panel d1
+        output [6:0] HEX2;  						// declares output to lives HEX panel d0
 
-        output [6:0] HEX0;  // score
-        output [6:0] HEX1;  // score
-        output [6:0] HEX2;  // lives
-
-	// Declare your inputs and outputs here
 	// Do not change the following outputs
 	output			VGA_CLK;   				//	VGA Clock
 	output			VGA_HS;					//	VGA H_SYNC
@@ -156,10 +155,10 @@ module RoadCrosser
 	output	[9:0]	VGA_G;	 				        //	VGA Green[9:0]
 	output	[9:0]	VGA_B;   				        //	VGA Blue[9:0]
 	
+        // declares wire for active low reset of this game
 	wire resetn;
 	assign resetn = SW[9];
         
-	
 	// declares the colour, x, y and writeEn wires that are vga inputs from controller output.
 	wire [2:0] colour;
 	wire [7:0] x;
@@ -360,7 +359,7 @@ module RoadCrosser
      .collision_grace_over_pulse(w_cgrace_over_pulse), .collision_grace_counter_reset_n(w_reset_cgrace),
      .collision_grace_counter_resetn_pulse1(w_reset_cgrace_pulse1), .HEX0_X(w_HEX0_X), .HEX0_Y(w_HEX0_Y),
      .HEX0_COLOR(w_HEX0_COLOR), .HEX1_X(w_HEX1_X), .HEX1_Y(w_HEX1_Y), .HEX1_COLOR(w_HEX1_COLOR), 
-     .HEX2_X(w_HEX2_X), .HEX2_Y(w_HEX2_Y), .HEX2_COLOR(w_HEX2_COLOR));
+     .HEX2_X(w_HEX2_X), .HEX2_Y(w_HEX2_Y), .HEX2_COLOR(w_HEX2_COLOR), .LEDR(LEDR));
      
      // declares instance for vga data buffer module
      displayOut vgaPath (.clock(CLOCK_50), .reset_n(1'b1), .x(w_vgaPath_x_in), .y(w_vgaPath_y_in),
@@ -451,7 +450,7 @@ endmodule
 Inputs: clock, reset_n, x, y, SW_in, collision_grace_over_pulse, n_car1,
         n_car2, n_car3, color, playerX, playerY, playerColor, lives,
         score, go, HEX0_X, HEX0_Y, HEX0_COLOR, HEX1_X, HEX1_Y, HEX1_COLOR,
-        HEX2_X, HEX2_Y, HEX2_COLOR
+        HEX2_X, HEX2_Y, HEX2_COLOR, LEDR
         
 Outputs: plot, cga_color, vga_x, vga_y, memReset, load_num_cars, load_lives, 
          load_vga, load_score, reset_score, init_cars_data, init_player_data, 
@@ -484,7 +483,7 @@ n_car3_out, x, y, color, playerX, playerY, playerColor, score, lives, lives_out,
 score_out, go, plot, vga_color, vga_x, vga_y, SW_in, memReset, start_reset_processing,
 objects_reset, collision_grace_over_pulse, collision_grace_counter_reset_n, 
 collision_grace_counter_resetn_pulse1, HEX0_X, HEX0_Y, HEX0_COLOR, HEX1_X, 
-HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
+HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
 
     input clock, reset_n;
     input [9:0] SW_in;    
@@ -494,8 +493,11 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
     output reg [2:0] vga_color;
     output reg [7:0] vga_x;
     output reg [7:0] vga_y;
+	 
+    // declares LED outputs for input status
+    output [9:0] LEDR;
     
-    //Controls memory reset
+    // declares output for controlling memory reset
     output reg memReset;
     
     // inputs 1 iff collision grace period is over
@@ -1343,6 +1345,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
                                     end
                                  end
            S_COLLISION_DETECTION_CYCLE1: begin
+			  
                                             // Add code here for future development
                                          end
            S_COLLISION_DETECTION_CYCLE2: begin
@@ -1554,6 +1557,20 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR);
    || current_state == S_UPDATE_GRAPHICS_HEX_SCORE_D0_CYCLE2
    || current_state == S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2
    || current_state == S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2) ? 1'b1 : 1'b0;
+	
+   // Assigns LEDs for setting status based on current state
+   assign LEDR[0] = (current_state == S_N_CARS1_INPUT 
+        || current_state == S_N_CARS1_INPUT_WAIT 
+	|| current_state == S_N_CARS2_INPUT_WAIT 
+        || current_state == S_N_CARS3_INPUT_WAIT
+	|| current_state == S_N_CARS2_INPUT 
+        || current_state == S_N_CARS3_INPUT) ? 1'b1 : 1'b0;
+   assign LEDR[1] = (current_state == S_N_CARS2_INPUT 
+        || current_state == S_N_CARS2_INPUT_WAIT
+	|| current_state == S_N_CARS3_INPUT_WAIT
+	|| current_state == S_N_CARS3_INPUT) ? 1'b1 : 1'b0;
+   assign LEDR[2] = (current_state == S_N_CARS3_INPUT 
+	|| current_state == S_N_CARS3_INPUT_WAIT) ? 1'b1 : 1'b0;
 endmodule
 
 /**
@@ -1725,6 +1742,13 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                                    color_out = color;
                                    load_player = 1'b1;
                                 end
+				else
+				begin
+				   x_out = `MAX_X;
+                                   y_out = y;
+                                   color_out = color;
+                                   load_player = 1'b1;
+			        end
                              end
                              else if(!right)
                              begin
@@ -1737,6 +1761,13 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                                           color_out = color;
                                           load_player = 1'b1;
                                      end
+				     else
+				     begin
+					  x_out = 8'b0000_0000;
+                                          y_out = y;
+                                          color_out = color;
+                                          load_player = 1'b1;
+				     end
                                 end
                              end
                         end
@@ -2086,7 +2117,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
             t_playerX = 8'b0000_0000;
             t_playerY = 8'b0000_0000;
             t_playerColor = 3'b000;
-   	    t_lives = 4'b0001;
+   	      t_lives = 4'b0001;
             t_n_car1_out = 4'b0000;
             t_n_car2_out = 4'b0000;
             t_n_car3_out = 4'b0000;
@@ -2252,7 +2283,6 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
                         t_color[i * 3 + j] = tempColor[j];
                      end
                   end
-                  
                end
                
                if(init_player_data)
