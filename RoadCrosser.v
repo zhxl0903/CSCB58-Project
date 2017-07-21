@@ -42,7 +42,7 @@
 * is displayed on HEX2. The score of the player is displayed
 * on HEX0 and HEX1. The score is based on the current
 * distance of the player away from the bottom of the screen.
-* This distance is between 0 and 119. Once the game ends,
+* This distance is between 0h and 77h. Once the game ends,
 * the player is allowed to start a new game by setting the
 * game settings mentioned above again. The score from the
 * previous game is not cleared until the next game begins.
@@ -329,7 +329,7 @@ module RoadCrosser
      wire [7:0] w_vgaPath_y_in;
      wire [2:0] w_vgaPath_color_in;
      
-     // Declares score data output from HEX VGA decoders to master control path
+     // declares score data output from HEX VGA decoders to master control path
      wire [119:0] w_HEX0_X;
      wire [119:0] w_HEX0_Y;
      wire [0:44] w_HEX0_COLOR;
@@ -503,7 +503,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     // inputs 1 iff collision grace period is over
     input collision_grace_over_pulse;
     
-    // reset output signal to collision grace counter
+    // declares reset output signal to collision grace counter
     output reg collision_grace_counter_reset_n;
     output reg collision_grace_counter_resetn_pulse1;
     
@@ -512,7 +512,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     reg [7:0] checkY;
     reg [2:0] checkColor;
 
-    // loading-codes to memory
+    // declares loading-codes to memory
     output reg load_num_cars, load_lives, load_score, reset_score,
     init_cars_data, init_player_data, load_vga;
     output reg load_num_cars1, load_num_cars2 , load_num_cars3;
@@ -528,13 +528,13 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     // Updates all current cars data based on the value of t_curr_x and t_curr_y
     reg load_currCarsData;
 
-    // code n-edge triggered reset control to game objects
+    // declares n-edge triggered reset control output signal to game objects
     output reg objects_reset;    
 
     // controls start of the game
     output reg start_game;
     
-    // temp variable storing game statuses and their load enable values
+    // declares temp variables storing game statuses and their load values
     reg t_start_game;
     reg load_start_game_status;
 
@@ -547,21 +547,21 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     // controls start of reset processing
     output reg start_reset_processing;
 
-    // input for number of cars of each type from memory
+    // declares input for number of cars of each type from memory
     input [3:0] n_car1;
     input [3:0] n_car2;
     input [3:0] n_car3;
 
-    // output of number of cars of each type to memory
+    // declares output of number of cars of each type to memory
     output reg [3:0] n_car1_out;
     output reg [3:0] n_car2_out;
     output reg [3:0] n_car3_out;
 
-    // input for x,y coords of each car from memory
+    // declares input for x,y coords of each car from memory
     input [359:0] x;
     input [359:0] y;
     
-    // input for color for each car from memory
+    // declares input for color for each car from memory
     input [134:0] color;
 
     // input for player data from memory
@@ -574,13 +574,13 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     reg [359:0] curr_x;
     reg [359:0] curr_y;
 
-    // temporary variables for setting the current corrdinates
+    // declares temporary variables for setting the current corrdinates
     // these coordinates are assigned to the current coordinates
     // registers on the next posedge of the clock
     reg [359:0] t_curr_x;
     reg [359:0] t_curr_y;
 
-    // Temporary variables to store position for current car
+    // declares temporary variables to store position for current car
     // The corresponding car data in current car data registers
     // car be updated on the next posedge of the clock by setting
     // load_currData to 1'b1
@@ -591,17 +591,17 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     reg [7:0] curr_playerX;
     reg [7:0] curr_playerY;
     
-    // Temprary registers to store current player coordinates
+    // declares temprary registers to store current player coordinates
     // The actual current player coordinate register are
     // updated on the next posedge of the clock.
     reg [7:0] t_curr_playerX;
     reg [7:0] t_curr_playerY;
 
-    // input for player lives and score from memory
+    // declares input for player lives and score from memory
     input [3:0] lives;
     input [7:0] score;
     
-    // output for player lives and score to memory
+    // declares output for player lives and score to memory
     output reg [3:0] lives_out;
     output reg [7:0] score_out;
 
@@ -618,10 +618,10 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     input [119:0] HEX2_Y;
     input [0:44] HEX2_COLOR;
     
-    // Go button during lives and number of cars selection states
+    // declares go button during lives and number of cars selection states
     input go;
     
-    // state registers
+    // declares state registers
     reg [6:0] current_state;
     reg [6:0] next_state;
     
@@ -638,7 +638,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
     integer HEXD1_INDEX;
     integer HEXD2_INDEX;
     
-    // loop accumulation variables
+    // declares loop accumulation variables
     integer i;
     integer j;
     integer k;
@@ -1089,7 +1089,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
                                                     end 
           S_UPDATE_GRAPHICS_CLEAR_HEX_SCORE_D1: begin
 
-                                                   // Clears second digit of the score on screen
+                                                   // clears second digit of the score on screen
                                                    // pixel by pixel
                                                    for(q = 0; q <= 7; q = q + 1)
                                                    begin
@@ -1117,7 +1117,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
                                                     end 
           S_UPDATE_GRAPHICS_CLEAR_HEX_LIVES: begin
 
-                                                // Clears HEX Lives Panel on screen pixel by pixel
+                                                // clears HEX Lives Panel on screen pixel by pixel
                                                 for(t = 0; t <= 7; t = t + 1)
                                                 begin
                                                      vga_x[t] = HEX2_X[8 * HEXD2_CLEAR_INDEX + t];
@@ -1140,7 +1140,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
                                                     end
           S_UPDATE_GRAPHICS_CLEAR_END: begin
 
-                                          // Initializes car index for updating cars on the screen
+                                          // initializes car index for updating cars on the screen
                                           // car_index = 0 in this state
                                           // HEXD2_CLEAR_INDEX = 0 in this state
                                           // Add code here for future development
@@ -1278,7 +1278,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
                                               end
           S_UPDATE_GRAPHICS_HEX_LIVES:begin
 
-                                         // Clears one pixel of the lives HEX Panel on the screen
+                                         // clears one pixel of the lives HEX Panel on the screen
                                          for(u = 0; u <= 7; u = u + 1)
                                          begin
                                               vga_x[u] = HEX2_X[8 * HEXD2_INDEX + u];
@@ -1698,7 +1698,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
     always @(*)
     begin
 
-       // By default make all our signals 0
+       // makes all our signals 0 by default
        load_player = 1'b0;
        x_out =8'b0000_0000;
        y_out =8'b0000_0000;
@@ -1708,7 +1708,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
        case (current_state)
            S_UPDATE_INFO: begin
                              
-                             // Updates player position based on key pressed
+                             // updates player position based on key pressed
                              if(!up)
                              begin
                                 if(y != 8'b0000_0000)
@@ -1752,7 +1752,8 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                              end
                              else if(!right)
                              begin
-                                if (x < `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
+                                if (x < `HEX_PANEL_MIN_X-1 
+                                || y < `HEX_PANEL_MIN_Y-1)
                                 begin
                                      if(x != `MAX_X)
                                      begin
@@ -1774,7 +1775,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
        endcase
     end
 
-    // current_state registers
+    // updates current_state register
     always@(posedge clock)
     begin: state_FFs
         if(!reset_n)
@@ -1783,7 +1784,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
             current_state <= next_state;
     end // state_FFS
     
-    // Divider is enabled and not reset iff game starts
+    // divider is enabled and not reset iff game starts
     assign divider_enable = start_game ? 1'b1 : 1'b0;
     assign reset_divider = start_game ? 1'b1 : 1'b0;
 
@@ -1792,7 +1793,7 @@ endmodule
 /**
 Inputs: clock, reset_n, x, y, color, dir,  n_cars, start-game
 
-Outputs: reset_divider, divider_enable, x_out, y_out, color_cout,
+Outputs: reset_divider, divider_enable, x_out, y_out, color_out,
          load_car
 
 This module creates a control path for car objects in this game.
@@ -1818,7 +1819,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
     input [44:0] color;
     input [3:0] n_cars;
 
-    // decalres start game input signal from master control unit
+    // declares start game input signal from master control unit
     input start_game;
     
     // declares car movement direction: dir = 1 iff car moves right
@@ -1832,7 +1833,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
     output reg [119:0] y_out;
     output reg [44:0] color_out;
     
-    // decalres car1 load signal
+    // declares car1 load signal
     output reg load_car;
     
     reg [4:0] current_state, next_state;
@@ -1962,7 +1963,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      reset_score, init_cars_data, init_player_data;
      input load_num_cars1, load_num_cars2, load_num_cars3;
 
-     // decalres number of each type of car objects (15 max) input
+     // declares number of each type of car objects (15 max) input
      input [3:0] n_car1_in;
      input [3:0] n_car2_in;
      input [3:0] n_car3_in;
@@ -1987,36 +1988,36 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      input [7:0] car3_x_in;
      input [119:0] car3_y_in;
      
-     // decalres inputs for car colors of each type
+     // declares inputs for car colors of each type
      input [44:0] car1_color_in;
      input [44:0] car2_color_in;
      input [44:0] car3_color_in;
      
-     // decalres player data inputs
+     // declares player data inputs
      input [7:0] player_x_in;
      input [7:0] player_y_in;
      input [2:0] player_color_in;
      
-     // decalres number of lives and score inputs
+     // declares number of lives and score inputs
      input [3:0] lives_in;
      input [7:0] score_in;
 
-     // decalres 90 bit random number input
+     // declares 90 bit random number input
      // from random number generator module
      input [89:0] rand_in;
      
-     // decalres car position outputs
+     // declares car position outputs
      // There are 15 car1 + 15 car2 + 15 car3 (8bits each)
      output reg [359:0] x;
      output reg [359:0] y;
      
-     // declare temp registers for storing car positions to be
+     // declares temp registers for storing car positions to be
      // loaded into x and y regs on next positive clock edge
      // during car position init
      reg [359:0] t_x;
      reg [359:0] t_y;
 
-     // decalre temp registers for car positions and colors to be 
+     // declares temp registers for car positions and colors to be 
      // loaded into x and y regs on next positive lock edge
      // during the corresponding loading of the type of cars
      reg [7:0] t_car1_x;
@@ -2034,7 +2035,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      output reg [134:0] color;
      reg [134:0] t_color;  
    
-     // decalres player color and coords outputs
+     // declares player color and coords outputs
      output reg [7:0] playerX;
      output reg [7:0] playerY;
      output reg [2:0] playerColor;
@@ -2061,7 +2062,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      integer i;
      integer j;
      
-     // Initializes all output registers
+     // initializes all output registers
      initial
      begin
         x = {360{1'b0}};
@@ -2079,7 +2080,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
      always @(*)
      begin
 
-        // Sets default values for each register
+        // sets default values for each register
         t_x = {360{1'b0}};
         t_y = {360{1'b0}};
         t_color = {135{1'b0}};
@@ -2136,7 +2137,7 @@ module memory(clock, reset_n, x, y, color, playerX, playerY, playerColor, score,
         end
         else
         begin
-               // Simultaneous updates are allowed
+               // simultaneous updates are allowed
                if(load_car1)
                begin
 
@@ -2394,7 +2395,7 @@ is 1'b1.  Reset will work regardless of the value of enable.
 **/
 module RateDivider (clock, reset_n, enable, period, pulse);  
 
-    // decalres clock and active low reset inputs
+    // declares clock and active low reset inputs
     input clock;
     input reset_n;
     
@@ -2407,7 +2408,7 @@ module RateDivider (clock, reset_n, enable, period, pulse);
     // declares pulse output
     output reg pulse;
 
-    // decalres counter register
+    // declares counter register
     reg [26:0] q; 
     
     // initializes pulse and counter output registers
@@ -2577,14 +2578,14 @@ module fibonacci_lfsr_90bit(
 	reg [89:0] data_next;
 	integer i;
 
-	// Initializes output value
+	// initializes output value
 	initial
 	begin
    	     data =
              90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
 	end
 
-	// Computes next number to be generated 
+	// computes next number to be generated 
 	always @* 
         begin
   	     data_next[89] = data[89]^data[1];
@@ -2596,7 +2597,7 @@ module fibonacci_lfsr_90bit(
   	     end
 	end
 
-	// Processes reset and updates output
+	// processes reset and updates output
 	always @(posedge clk or negedge rst_n)
         begin
   	    if(!rst_n)
@@ -2636,7 +2637,7 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
    input [7:0] offsetX;
    input [7:0] offsetY;
 
-   // decalres x, y, and color array outputs
+   // declares x, y, and color array outputs
    output reg [119:0] xArray;
    output reg [119:0] yArray;
    output reg [0:44] colorArray;
@@ -2649,7 +2650,7 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
         yArray = {120{1'b0}};
         colorArray = {45{1'b0}};
         
-        // Outputs new coordinate and color arrays based on in
+        // outputs new coordinate and color arrays based on in
         if(in == 4'b0000)
         begin
              xArray = {56'b00000010_00000001_00000000_00000010_00000001_00000000_00000010,
@@ -2779,7 +2780,7 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
              colorArray = 45'b111111111111000000111111111111000000111000000;
         end
         
-        // Applies offsets to position of each color
+        // applies offsets to position of each color
         xArray = xArray + {15{offsetX}};
         yArray = yArray + {15{offsetY}};
    end
