@@ -111,7 +111,7 @@ after setting the parameters in order: # of Lives, # of cars
 of type 1, # of cars of type 2 # of cars of type 3 (which speeds
 are from fast to slow.)  After game starts, KEY[3:0] are used
 for movements. The game ends either player reaches the top of 
-the screen or when player's lives fall down to 0. Each collision
+the screen or when player's lives falls down to 0. Each collision
 decreases the player's life by 1. Score is output to HEX0 and HEX1.
 Number of lives is output to HEX2. The score is not reset on the
 display panels after the game ends. It is reset once the next game 
@@ -474,7 +474,6 @@ the S_RESET1 state where all other controls and the memory
 unit is reset and the screen is cleared for the next game.
 Score will not be reset till next game starts to allow
 the player to view the score after the game ends. 
-
 **/
 module controlMaster(clock, reset_n, start_game, load_num_cars, load_num_cars1,
 load_num_cars2 , load_num_cars3, load_lives, load_vga, load_score, reset_score,
@@ -2388,8 +2387,8 @@ This module implements a rate divider for the objects
 in the game. period sets the number of cycles of the clock
 before the divider resets. If you want the period to be P,
 then set period to be P-1. The Pth cycle is when q==period
-and q resets. Pulse is generated in throughout the last 
-cycle. Clear_b resets the counter to start countring from
+and q resets. Pulse is generated throughout the last 
+cycle. Clear_b resets the counter to start counting from
 0 and sets pulse to 0. The divider will function iff enable
 is 1'b1.  Reset will work regardless of the value of enable.
 **/
@@ -2625,8 +2624,8 @@ endmodule
  *        matrix of pixels, in row by row order, each pixel is 3 bits
  *
  * This module creates a decoder for displaying HEX digits on the screen.
- * in is connected to the scores output from the memory module. offsetX
- * and offsetY can be used to set offsets for each coordinate in the 
+ * in is connected to the scores or lives output from the memory module. 
+ * offsetX and offsetY can be used to set offsets for each coordinate 
  * stored in xArray and yArray. xArray, yArray, and colorArray can be 
  * feeded into the master controlpath for outputs to the vga buffer module.
  */
