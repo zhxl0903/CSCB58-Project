@@ -1740,8 +1740,10 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                                    color_out = color;
                                    load_player = 1'b1;
                                 end
-				else
+				else if(y < `HEX_PANEL_MIN_Y-1)
 				begin
+                                   
+                                   // allows looped motion if player is above vga hex panels
 				   x_out = `MAX_X;
                                    y_out = y;
                                    color_out = color;
