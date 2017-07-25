@@ -1,0 +1,101 @@
+same clock => same rate divider => same speeds across the screen(coord change speed not actual screen update speed) => 1 x coord counter; different y start off values
+
+How to update accordingly:
+
+We will use CLOCK50 for update of graphics based on the actual x and y values; points may stay at the same spots
+The periods of other divders should be integer multiples of CLOCK50 so that CLOCK50 can cover the update of
+all points. No clock will have a period of less than CLOCK50. Player can be clocked at a rate following these 
+requirements. Our graphics will generate the view of events relative to the viewer at the update rate of CLOCK50.
+
+Would we have a situation where a collision is not detected?
+
+If a collision is not detected, then it must have happened and changed to new coords between two posedges of CLOCK50 which
+means the period of that CLOCK/divider is less than that of CLOCK50 which is impossible based on our requriement.
+
+In fact, we can set CLOCK50 update period(Graphics and detection) to be a different slower CLOCK we call CLOCK100 (i.e. using a divider) to account for change in states before checking
+for collision (Each change of state requires one clock cycle). This is our graphics and collision detection update rate. The update rate of coords
+of players and objects must meet the requirement they have clock periods greater than CLOCK50 and are integer multiples of the period of CLOCK100(actually
+integer multiple is optional). We can use CLOCK50 for state transition transition. However, we must ensure any 2 nearest states involving change in coords must be at a minimum
+length greater than or equal to the period of CLOCK100. This is guarenteed if we check for collision and update graphics somewhere in between.
+
+Some of the info above are subject to change.
+
+Structure:
+
+IMPORTANT: Since we have multiple states in the master FSM, the collision detection (graphic update state first then
+followed by transition to collision detection state) must happen at a period less than the update period of any coord updates
+in minor FSMs. Each state lasts one clock cycle. It must not equal to the update period of the master clock for if the two clocks 
+are synchronized, then the master clock will update with the previous coords of the memory at the posedge of the minor clock(update time)
+The update sequence during each cycle of update has the following state transitions: 
+
+We will have a graphic update and collision detection FSM (Master FSM) running at a period faster than the period of all object coord update FSMs (it will be CLOCK_50)
+If collision is detected, we will reset everything and go back to state 0. The graphic update FSM will also be used for KEY inputs etc.
+Graphics should be updated before collision detection. The period of all coord updates FSM clocks should happen at a period greater than 100000*period of master clock to
+account for the delays from periods between coord update called to memory -> memory update -> graphic update -> clear screen using Master FSM
+-> updating each object coord on the screen.
+
+We will have object coord update FSMs that update coords at periods greater than that of the main FSM.
+They will also go back to a initial state once reset is done. Each of these FSMs have an enable signal
+triggered by the main FSM once game starts. They will start working once
+enabled. If collision is detected, enable and reset will be set to 0 by the master FSM so the machines will go back to their starting
+state for next game. 
+
+IMPORTANT: When calling for an update to memory from minor FSMs, make sure you use
+a register to first assign the current coords of the memory (snapshot at time of update).
+Then call the update op and assign new input coords based on the coords in the register not the 
+register output of the memory. If you base it on the current output reg of the memory, then 
+since memory's clock cycle is faster than all minor FSMs, it will update continuously the memory
+based on the new output assigned each time during the update clock edge of the memory.  
+
+There will be a memory module storing the x coords and the y coords of different moving enemies.
+This memory will be clocked at the same rate as the master FSM.
+We will use the same x coords for enemies moving at same speeds and different fixed y coords for
+each enemy. All coords and coords will be stored in flattened arrays. For example, storing 3 8 bits coords
+will be a reg [23:0] x. x[7:0] for first coord, x[15:8] for second coord, x[23:16] for third coord
+All data regs will be outputs listened by the various FSMs. Update to the coords or colors can be made
+as follows: e.g. coord # (which coord you want to update), new x, new y, new color when set opcode= 2'b01
+We will have different flattened arrays for coords that update at different periods. 
+for example: opcode = 3'b001 update 25mhz objects 3'b010 update 10mhz objects etc. Their coords arrays
+will be feeded in through different inputs.
+
+The mem update will happen after one clock cycle of the clock of the master FSM from current pos edge. 
+
+At the end of each game or after reset, we will draw a black box to clear the screen.
+
+Score will be stored in memory. It is not cleared at the end but during KEY press state. It is determined based
+on the y coord of the player. The score is updated via the master FSM during the game after graphic update.
+Score is output to the HEX display via output from master FSM.
+
+Each FSM will only function once enabled. Clear signal will make each minor FSM go back to starting state.
+How many FSMs are enabled depend on the number selecteds at the beginning of the game. We can select how many enemies
+of each speed type are enabled. We can do so by assigning an n bit output register / not register from 
+master FSM, each enable signal will be connected to one bit of the output register. This way, we can update the enable
+signals using a for loop depending on the numbers for each enabled.
+
+If time permits, we will add an additional input controlling the number of lives given to the player. This is set
+during the key press setting stage before the game. We will decrease the life for each collision detected between
+player and enemies. If life drops down to 0, we will end the game. The life variable is connected as output to the HEX Display.
+
+New idea for CLOCK:
+All modules will use CLOCK_50. For delays in each minor control unit, we will still in the WAIT State until we get an update pulse
+from divider. Then we will go into a few more states to do movement updates. Since number of state tranistions = number of clock cycles << (far less than) min 100000 clock cycle
+periods of the divders, we are fine as long as we go back to the wait state in time.
+
+We will need wires allowing simul-update of the memory (e.g. updating type1, type2, and type3 enemy data simulataenously.
+Each control unit can output the update signal to different wires to turn on the update for the specific type of enermy.
+
+Since the collision detection period is shorter than the movement period of cars, wouldn't the player's
+life drop really fast during collision?
+
+Answer: 
+
+Solution 1: We can use a counter to implement a grace period during which the player is immune to
+further collisions. After a collision, the counter will start counting during which time the player
+is immortal. Once counter ends counting, player will lose hp as usual upon collision. The counter
+should count clock cycles slightly higher than the player movement update speed so that the player has sufficient time
+to move out of the collision coordinate.
+
+
+
+
+ 
