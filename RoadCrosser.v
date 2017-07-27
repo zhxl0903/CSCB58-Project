@@ -1721,7 +1721,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                              end
                              else if(!down)
                              begin
-                                if (x < `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
+                                if (x <= `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
                                 begin
                                      if(y != `MAX_Y)
                                      begin
@@ -1741,7 +1741,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                                    color_out = color;
                                    load_player = 1'b1;
                                 end
-				else if(y < `HEX_PANEL_MIN_Y-1)
+				else if(y <= `HEX_PANEL_MIN_Y-1)
 				begin
                                    
                                    // allows looped motion if player is above vga hex panels
@@ -1753,7 +1753,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                              end
                              else if(!right)
                              begin
-                                if (x < `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
+                                if (x < `HEX_PANEL_MIN_X-1 || y <= `HEX_PANEL_MIN_Y-1)
                                 begin
                                      
                                      // allows movement if player is outside VGA HEX display panel boundary
