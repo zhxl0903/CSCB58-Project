@@ -75,10 +75,9 @@
 `define HEX2_X 149
 `define HEX2_Y 114
 
+// Defines boundary for VGA HEX Display Panels
 `define HEX_PANEL_MIN_X 149
-`define HEX_PANEL_MAX_X 159
 `define HEX_PANEL_MIN_Y 114
-`define HEX_PAENL_MAX_Y 119
 
 // Defines Player spawn location
 `define PLAYER_SPAWN_X 80
@@ -247,7 +246,7 @@ module RoadCrosser
      
      // enables go and SW inputs  iff game is not resetting or running a level
      assign go_master_control_in = (w_start_reset_processing || startGameOut) ? 1'b0 : ~KEY[0];
-     assign SW_master_control_in = (w_start_reset_processing || startGameOut) ? 1'b0 : SW;
+     assign SW_master_control_in = (w_start_reset_processing || startGameOut) ? {10{1'b0}} : SW;
      
      // declares wires player data outputs from RAM
      wire [7:0] w_player_x_ram_out;
@@ -1439,6 +1438,10 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
                                 t_observed_changes = 1'b0;
                                 load_observed_changes_status = 1'b1;
                              end
+         default: begin
+                     
+                     // does nothing by default
+                  end
       endcase
    end
    
@@ -1555,7 +1558,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
    || current_state == S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2
    || current_state == S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2) ? 1'b1 : 1'b0;
 	
-   // Assigns LEDs' values for setting status based on current state
+   // sssigns LEDRs' values for setting status based on current state
    assign LEDR[0] = (current_state == S_N_CARS1_INPUT 
         || current_state == S_N_CARS1_INPUT_WAIT 
 	|| current_state == S_N_CARS2_INPUT_WAIT 
@@ -1568,6 +1571,9 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
 	|| current_state == S_N_CARS3_INPUT) ? 1'b1 : 1'b0;
    assign LEDR[2] = (current_state == S_N_CARS3_INPUT 
 	|| current_state == S_N_CARS3_INPUT_WAIT) ? 1'b1 : 1'b0;
+
+   // assigns off values to LEDR[9:3]
+   assign LEDR[9:3] = 7'b0000_000;
 endmodule
 
 /**
@@ -1674,9 +1680,6 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
     
     reg [4:0] current_state, next_state;
 
-    // loop index variable
-    integer i;
-
     localparam
                S_WAIT          = 5'd0,
                S_WAIT_FOR_PULSE = 5'd1,
@@ -1688,7 +1691,7 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
             S_WAIT:  next_state = start_game ? S_WAIT_FOR_PULSE : S_WAIT;
             S_WAIT_FOR_PULSE: next_state = pulse_in ? S_UPDATE_INFO : S_WAIT_FOR_PULSE;
             S_UPDATE_INFO: next_state = S_WAIT_FOR_PULSE;
-            default:     next_state = S_WAIT;
+            default: next_state = S_WAIT;
        endcase
     end
 
@@ -1700,7 +1703,6 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
        x_out =8'b0000_0000;
        y_out =8'b0000_0000;
        color_out =3'b000;
-       i = 0;
        
        case (current_state)
            S_UPDATE_INFO: begin
@@ -1751,9 +1753,10 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                              end
                              else if(!right)
                              begin
-                                if (x < `HEX_PANEL_MIN_X-1 
-                                || y < `HEX_PANEL_MIN_Y-1)
+                                if (x < `HEX_PANEL_MIN_X-1 || y < `HEX_PANEL_MIN_Y-1)
                                 begin
+                                     
+                                     // allows movement if player is outside VGA HEX display panel boundary
                                      if(x != `MAX_X)
                                      begin
                                           x_out = x + 8'b0000_0001;
@@ -1771,6 +1774,10 @@ pulse_in, up, down, left, right, x, y, color, load_player, x_out, y_out, color_o
                                 end
                              end
                         end
+          default: begin
+                       
+                      // does nothing by default
+                   end
        endcase
     end
 
@@ -1824,7 +1831,7 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
     // declares car movement direction: dir = 1 iff car moves right
     input dir;    
 
-    // decalres reset and enable outputs to divider
+    // declares reset and enable outputs to divider
     output reset_divider, divider_enable;
 
     // declares output car data to memory
@@ -1837,9 +1844,6 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
     
     reg [4:0] current_state, next_state;
     
-    // loop index variable
-    integer i;
-
     localparam  
                 S_WAIT          = 5'd0,
                 S_WAIT_FOR_PULSE = 5'd1,
@@ -1863,7 +1867,6 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
        x_out = 0;
        y_out = 0;
        color_out = 0;
-       i = 0;
 
        case (current_state)
            S_UPDATE_INFO: begin
@@ -1912,6 +1915,10 @@ pulse_in, x, y, color, dir, n_cars, load_car, x_out, y_out, color_out);
                                    end
                              end
                           end
+          default: begin
+                       
+                      // does nothing by default
+                   end
        endcase
     end
 
@@ -2431,17 +2438,17 @@ module RateDivider (clock, reset_n, enable, period, pulse);
                 // peforms normal counting and pulsing if enabled
         	if (q == period) 
        	        begin
-            		// resets q to 0
-            		q <= 0; 
+            	     // resets q to 0
+            	     q <= 0; 
 
-            		// generates pulse
-            		pulse <= 1'b1;
+            	     // generates pulse
+            	     pulse <= 1'b1;
         	end
         	else if (clock == 1'b1) 
         	begin
-            		// increments q
-                        pulse <= 1'b0;
-            		q <= q + 1'b1;  
+            	     // increments q
+                     pulse <= 1'b0;
+                     q <= q + 1'b1;  
         	end
     	end
    end
@@ -2579,8 +2586,7 @@ module fibonacci_lfsr_90bit(
 	// initializes output value
 	initial
 	begin
-   	     data =
-             90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
+   	     data = {90{1'b1}};
 	end
 
 	// computes next number to be generated 
@@ -2591,7 +2597,7 @@ module fibonacci_lfsr_90bit(
 
   	     for (i=87; i>=0; i=i-1)
   	     begin
-     	     	  data_next[i]=data[i]^data_next[i+2];
+     	     	  data_next[i] = data[i] ^ data_next[i + 2];
   	     end
 	end
 
@@ -2599,8 +2605,7 @@ module fibonacci_lfsr_90bit(
 	always @(posedge clk or negedge rst_n)
         begin
   	    if(!rst_n)
-    		data <=
-                90'b1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111_1111111111;
+    		data <= {90{1'b1}};
   	    else
     		data <= data_next;
         end
@@ -2646,9 +2651,9 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
    begin
 
         // sets default values for output registers based on offsetX and offsetY
-        xArray = {120{1'b0}};
-        yArray = {120{1'b0}};
-        colorArray = {45{1'b0}};
+        //xArray = {120{1'b0}};
+        //yArray = {120{1'b0}};
+        //colorArray = {45{1'b0}};
         
         // outputs new coordinate and color arrays based on in
         if(in == 4'b0000)
