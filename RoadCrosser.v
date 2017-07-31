@@ -1558,7 +1558,7 @@ HEX1_Y, HEX1_COLOR, HEX2_X, HEX2_Y, HEX2_COLOR, LEDR);
    || current_state == S_UPDATE_GRAPHICS_HEX_SCORE_D1_CYCLE2
    || current_state == S_UPDATE_GRAPHICS_HEX_LIVES_CYCLE2) ? 1'b1 : 1'b0;
 	
-   // sssigns LEDRs' values for setting status based on current state
+   // assigns LEDRs' values for setting status based on current state
    assign LEDR[0] = (current_state == S_N_CARS1_INPUT 
         || current_state == S_N_CARS1_INPUT_WAIT 
 	|| current_state == S_N_CARS2_INPUT_WAIT 
@@ -2435,7 +2435,7 @@ module RateDivider (clock, reset_n, enable, period, pulse);
         end
         else if(enable)
         begin
-                // peforms normal counting and pulsing if enabled
+                // performs normal counting and pulsing if enabled
         	if (q == period) 
        	        begin
             	     // resets q to 0
@@ -2649,11 +2649,6 @@ module HEX_VGA(xArray, yArray, offsetX, offsetY, colorArray, in);
    
    always @(in or offsetX or offsetY)
    begin
-
-        // sets default values for output registers based on offsetX and offsetY
-        //xArray = {120{1'b0}};
-        //yArray = {120{1'b0}};
-        //colorArray = {45{1'b0}};
         
         // outputs new coordinate and color arrays based on in
         if(in == 4'b0000)
