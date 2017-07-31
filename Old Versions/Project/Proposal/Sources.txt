@@ -1,0 +1,3 @@
+Ranom Number generation
+
+https://stackoverflow.com/questions/14497877/how-to-implement-a-pseudo-hardware-random-number-generator
